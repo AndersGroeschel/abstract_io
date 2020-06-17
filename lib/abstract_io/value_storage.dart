@@ -13,7 +13,7 @@ mixin ValueStorage<W,R> on AbstractIO<W,R>{
   R _data;
 
   Future<bool> write() async {
-    return await ioInterface.sendData(translator.translateReadable(_data));
+    return sendData(_data);
   }
 
   Future<void> load() async {

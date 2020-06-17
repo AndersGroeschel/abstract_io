@@ -42,6 +42,17 @@ abstract class AbstractIO<W,R>{
     initialize();
   }
 
+  /// sends the data to wherever it is being stored and returns whether or not
+  /// it was successful 
+  /// 
+  /// the core functionality of this function is implemented in ioInterface
+  @protected
+  Future<bool> sendData(R data){
+    return ioInterface.sendData(
+      translator.translateReadable(data)
+    );
+  }
+
   /// called when data is recieved by the [ioInterface]
   /// 
   /// this method is overriden by [ValueFetcher] and [ValueStorage] and can be overriden
@@ -244,7 +255,6 @@ class _CastingTranslator<W,R> extends Translator<W,R>{
 
 
 
-//TODO make IOInterface extend AbstractIO
 /// allows you to send data request data and recieve data all of type [W]
 /// 
 /// it is best practice that [W] should be the type that the data is sent as

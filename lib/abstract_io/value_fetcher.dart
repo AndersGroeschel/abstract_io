@@ -9,8 +9,8 @@ mixin ValueFetcher<W,R> on AbstractIO<W,R>{
   R _tempVal;
 
   /// write [data] using the [ioInterface] given to this
-  Future<bool> write(R data) async {
-    return await ioInterface.sendData(translator.translateReadable(data));
+  Future<bool> write(R data){
+    return sendData(data);
   }
 
   /// read the value that was saved using the [ioInterface] given to this
