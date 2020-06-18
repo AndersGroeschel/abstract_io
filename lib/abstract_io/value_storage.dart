@@ -23,11 +23,24 @@ mixin ValueStorage<W,R> on AbstractIO<W,R>{
   @override
   void onDataRecieved(R data) {
     _data = data;
-    if(_data is IOAccess){
-      (_data as IOAccess)._io = this;
-    }else if(_data is Iterable<IOAccess>){
-      for(IOAccess d in _data){
+    if(_data is StorageAccess){
+      (_data as StorageAccess)._io = this;
+    }else if(_data is Iterable<StorageAccess>){
+      for(StorageAccess d in _data){
         d._io = this;
+      }
+    }else if(_data is Map){
+      try {
+        for(StorageAccess d in (_data as Map).values){
+          d._io = this;
+        }
+      } catch (e) {
+      }
+      try {
+        for(StorageAccess d in (_data as Map).keys){
+          d._io = this;
+        }
+      } catch (e) {
       }
     }
   }
@@ -47,9 +60,9 @@ mixin ValueAccess<W,R> on ValueStorage<W,R>{
   }
 
   set value(R newVal){
-    if(_data is IOAccess){
-      (_data as IOAccess)._io = null;
-      (newVal as IOAccess)._io = this;
+    if(_data is StorageAccess){
+      (_data as StorageAccess)._io = null;
+      (newVal as StorageAccess)._io = this;
     }
     onDataRecieved(_data);
     write();
@@ -106,7 +119,7 @@ mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenabl
 
 /// a mixin that allows this to call the [write] function for the 
 /// [ValueStorage] it is in
-mixin IOAccess{
+mixin StorageAccess{
 
   /// a reference to the [ValueStorage] this came from 
   /// 
@@ -144,7 +157,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     if(element == null)
       return;
 
-    if(element is IOAccess)
+    if(element is StorageAccess)
       element._io = this;
   }
 
@@ -152,7 +165,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   void _removedFromList(E element){
     if(element == null)
       return;
-    if(element is IOAccess)
+    if(element is StorageAccess)
       element._io = null;
   }
 
@@ -602,14 +615,14 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   void _addedVal(V val){
     if(val == null)
       return;
-    if(val is IOAccess)
+    if(val is StorageAccess)
       val._io = this;
   }
 
   void _removedVal(V val){
     if(val == null)
       return;
-    if(val is IOAccess)
+    if(val is StorageAccess)
       val._io = null;
   }
 
