@@ -18,6 +18,9 @@ mixin ValueFetcher<W,R> on AbstractIO<W,R>{
     await ioInterface.requestData();
     R val = _tempVal;
     _tempVal = null;
+    if(val is FetcherAccess){
+      val._io = this;
+    }
     return val;
   }
 
@@ -27,6 +30,16 @@ mixin ValueFetcher<W,R> on AbstractIO<W,R>{
     _tempVal = data;
   }
 
+}
+
+/// a mixin that allows this to write itself using the [ValueFetcher] that retrieved it
+mixin FetcherAccess{
+
+  /// a reference to the [ValueFetcher] that retrieved this
+  ValueFetcher _io;
+
+  /// writes this using the [ValueFetcher] that retrieved it
+  Future<bool> write() => _io.write(this);
 }
 
 
