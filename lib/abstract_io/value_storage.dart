@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:abstract_io/abstract_io.dart';
 import 'package:flutter/foundation.dart';
 
 import 'abstract_base.dart';
@@ -8,7 +9,9 @@ import 'additional_functionality.dart';
 
 /// a mixin on [AbstractIO] that stores the loaded value for you
 /// 
-/// 
+/// by itself this mixin isn't that powerful but it sets the stage for more useful
+/// functionality with [ListStorage] and [MapStorage] to allow for iterable forms of 
+/// storage or [ValueAccess] for direct access to the value
 mixin ValueStorage<W,R> on AbstractIO<W,R>{
   R _data;
 
@@ -21,28 +24,9 @@ mixin ValueStorage<W,R> on AbstractIO<W,R>{
   }
 
   @override
+  @mustCallSuper
   void onDataRecieved(R data) {
     _data = data;
-    if(_data is StorageAccess){
-      (_data as StorageAccess)._io = this;
-    }else if(_data is Iterable<StorageAccess>){
-      for(StorageAccess d in _data){
-        d._io = this;
-      }
-    }else if(_data is Map){
-      try {
-        for(StorageAccess d in (_data as Map).values){
-          d._io = this;
-        }
-      } catch (e) {
-      }
-      try {
-        for(StorageAccess d in (_data as Map).keys){
-          d._io = this;
-        }
-      } catch (e) {
-      }
-    }
   }
 
 }
@@ -61,11 +45,20 @@ mixin ValueAccess<W,R> on ValueStorage<W,R>{
 
   set value(R newVal){
     if(_data is StorageAccess){
-      (_data as StorageAccess)._io = null;
-      (newVal as StorageAccess)._io = this;
+      (_data as StorageAccess).storageReference = null;
+      (newVal as StorageAccess).storageReference = this;
     }
     onDataRecieved(_data);
     write();
+  }
+
+  @override
+  @mustCallSuper
+  void onDataRecieved(data) {
+    super.onDataRecieved(data);
+    if(_data is StorageAccess){
+      (_data as StorageAccess).storageReference = this;
+    }
   }
 }
 
@@ -122,10 +115,10 @@ mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenabl
 mixin StorageAccess{
 
   /// a reference to the [ValueStorage] this came from 
-  ValueStorage _io;
+  ValueStorage storageReference;
 
   /// saves this using the [ValueStorage] that stores it
-  Future<bool> write() => _io.write();
+  Future<bool> write() => storageReference.write();
 }
 
 
@@ -155,7 +148,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
       return;
 
     if(element is StorageAccess)
-      element._io = this;
+      element.storageReference = this;
   }
 
   @protected
@@ -163,7 +156,18 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     if(element == null)
       return;
     if(element is StorageAccess)
-      element._io = null;
+      element.storageReference = null;
+  }
+
+  @override
+  @mustCallSuper
+  void onDataRecieved(List<E> data) {
+   super.onDataRecieved(data);
+   if(E is StorageAccess){
+      for(StorageAccess d in _data.cast<StorageAccess>()){
+        d.storageReference = this;
+      }
+    }
   }
 
   @override
@@ -613,14 +617,24 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     if(val == null)
       return;
     if(val is StorageAccess)
-      val._io = this;
+      val.storageReference = this;
   }
 
   void _removedVal(V val){
     if(val == null)
       return;
     if(val is StorageAccess)
-      val._io = null;
+      val.storageReference = null;
+  }
+
+  @override
+  void onDataRecieved(Map data) {
+    super.onDataRecieved(data);
+    if(V is StorageAccess){
+      for(StorageAccess val in data.values){
+        val.storageReference = this;
+      }
+    }
   }
 
   @override
