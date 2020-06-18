@@ -122,9 +122,6 @@ mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenabl
 mixin StorageAccess{
 
   /// a reference to the [ValueStorage] this came from 
-  /// 
-  /// it is not gaurenteed to be non-null unless this was read 
-  /// using an [ValueStorage] with the proper functionality
   ValueStorage _io;
 
   /// saves this using the [ValueStorage] that stores it
