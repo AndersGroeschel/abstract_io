@@ -2,9 +2,6 @@ import 'dart:math';
 import 'package:abstract_io/abstract_io.dart';
 import 'package:flutter/foundation.dart';
 
-import 'abstract_base.dart';
-import 'additional_functionality.dart';
-
 //TODO Documentation
 
 /// a mixin on [AbstractIO] that stores the loaded value for you
@@ -13,12 +10,15 @@ import 'additional_functionality.dart';
 /// functionality with [ListStorage] and [MapStorage] to allow for iterable forms of 
 /// storage or [ValueAccess] for direct access to the value
 mixin ValueStorage<W,R> on AbstractIO<W,R>{
+  /// the stored data that was loaded
   R _data;
 
+  /// writes [_data] using the [sendData] function
   Future<bool> write() async {
     return sendData(_data);
   }
 
+  /// loads the value into [_data] using the [ioInterfaces] requestData function
   Future<void> load() async {
     return ioInterface.requestData();
   }
@@ -32,7 +32,7 @@ mixin ValueStorage<W,R> on AbstractIO<W,R>{
 }
 
 
-
+/// a mixin that allows this to access the [_data] that is being stored
 mixin ValueAccess<W,R> on ValueStorage<W,R>{
 
   /// the current value stored in this
@@ -43,9 +43,10 @@ mixin ValueAccess<W,R> on ValueStorage<W,R>{
     return _data;
   }
 
+  /// sets the current value to [newVal]
   set value(R newVal){
     if(_data is StorageAccess){
-      (_data as StorageAccess).storageReference = null;
+      (_data as StorageAccess)?.storageReference = null;
       (newVal as StorageAccess).storageReference = this;
     }
     onDataRecieved(_data);
@@ -62,6 +63,15 @@ mixin ValueAccess<W,R> on ValueStorage<W,R>{
   }
 }
 
+/// gives [ValueStorage] an intial value 
+/// 
+/// this value is set in the function [initialize] which is called in the initialization
+/// of [AbstractIO]
+/// 
+/// the initial value will likely be overridden when the value is loaded
+/// 
+/// the [ListStorage] and [MapStorage] mixins initialize [_data] to and empty list
+/// and an emtpy map respectively
 mixin InitialValue<W,R> on ValueStorage<W,R>{
   R get initialValue;
 
@@ -73,10 +83,17 @@ mixin InitialValue<W,R> on ValueStorage<W,R>{
   }
 }
 
+/// a mixin that makes the value storage [ValueListenable]
+/// 
+/// every time [onDataRecieved] is called the listeners are notified
+/// 
+/// additionally the [ListStorage] and [MapStorage] mixins notify listeners when 
+/// a value is added, removed and in some other cases as well
 mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenable<R>{
 
   List<VoidCallback> _listeners = [];
 
+  /// notifies listeners that an update has occured
   void notifyListeners(){
     for(VoidCallback listener in _listeners){
       listener();
@@ -103,6 +120,7 @@ mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenabl
     notifyListeners();
   }
 
+  /// the current value of this
   R get data => _data;
 }
 
@@ -125,7 +143,7 @@ mixin StorageAccess{
 
 
 
-
+/// adds the functionality of a list to this [ValueStorage] 
 mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
 
@@ -139,7 +157,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
       }
     }
   }
-
+  
   bool _shouldSave = true;
 
   @protected
