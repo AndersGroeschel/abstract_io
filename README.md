@@ -13,7 +13,7 @@ The IOInterface provides a way for Abstract_IO to send and recieve data from whe
 it is stored, some IOInterfaces have been implenented in seperate packages and you are 
 free to create your own
 
-For more in depth information look at the documention. At the time of writting this about 75% is completed
+For more in depth information look at the documention. At the time of writing documentation is complete.
 
 ## Getting Started
 
