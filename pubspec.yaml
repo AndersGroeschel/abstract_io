@@ -2,7 +2,7 @@ name: abstract_io
 description: Abstract IO is designed to simplify and generalize saving data both localy and externaly
 version: 0.1.0
 author: Anders Groeschel
-homepage:
+repository: https://github.com/AndersGroeschel/abstract_io
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
