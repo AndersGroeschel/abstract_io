@@ -1,3 +1,4 @@
-## [0.0.1] - TODO: Add release date.
+## [0.1.0] - 6/19/2020
 
-* TODO: Describe initial release.
+* initial release of Abstract IO
+
