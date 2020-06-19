@@ -144,10 +144,17 @@ mixin StorageAccess{
 
 
 /// adds the functionality of a list to this [ValueStorage] 
+/// 
+/// automatically saves this list when a it is updated unless otherwise specified
+/// 
+/// automatically notifies listeners of an update if this has the [ListenerSupport] or
+/// [ValueListenableSupport] mixin
 mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
 
   bool _shouldNotify = true;
+
+  /// notifies listeners if this is a [ListenerSupport] or a [ValueListenableSupport]
   void _notify(){
     if(_shouldNotify){
       if(this is ListenerSupport){
@@ -158,8 +165,25 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     }
   }
   
+  bool _defaultShouldSave = true;
   bool _shouldSave = true;
 
+  /// the default of whether or not this will save
+  /// 
+  /// most functions that save have an optional parameter for saving with a default of true
+  /// this value only affects those functions that don't such as the [] operator
+  set shouldSave(bool shouldSave){
+    _defaultShouldSave = shouldSave;
+    _shouldSave = shouldSave;
+  }
+
+  bool get shouldSave => _shouldSave;
+
+  
+
+  /// called when a value is added to the list
+  /// 
+  /// if the element has the [StorageAccess] mixin its storage reference is set to this
   @protected
   void _addedToList(E element){
     if(element == null)
@@ -169,6 +193,9 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
       element.storageReference = this;
   }
 
+  /// called when a value is removed from the list
+  /// 
+  /// if the element has the [StorageAccess] mixin its storage reference is set to null
   @protected
   void _removedFromList(E element){
     if(element == null)
@@ -181,6 +208,8 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   @mustCallSuper
   void onDataRecieved(List<E> data) {
    super.onDataRecieved(data);
+   // if the values of the list have the StorageAccess mixin then their references 
+   // are set to this
    if(E is StorageAccess){
       for(StorageAccess d in _data.cast<StorageAccess>()){
         d.storageReference = this;
@@ -301,7 +330,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     }
     _shouldSave = save;
     this[index] = newVal;
-    _shouldSave = true;
+    _shouldSave = _defaultShouldSave;
     return true;
   }
 
@@ -318,7 +347,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
       iter.moveNext();
       this[index] = iter.current;
     }
-    _shouldSave = true;
+    _shouldSave = _defaultShouldSave;
     _shouldNotify = true;
     if(save){
       write();
@@ -616,9 +645,17 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 }
 
 
+/// adds the functionality of a Map to this [ValueStorage] 
+/// 
+/// automatically saves this map when a value is updated unless otherwise specified
+/// 
+/// automatically notifies listeners of an update if this has the [ListenerSupport] or
+/// [ValueListenableSupport] mixin
 mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
 
   bool _shouldNotify = true;
+
+  /// notifies listeners if this is a [ListenerSupport] or a [ValueListenableSupport]
   void _notify(){
     if(_shouldNotify){
       if(this is ListenerSupport){
@@ -629,8 +666,23 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     }
   }
 
+  bool _defaultShouldSave = true;
   bool _shouldSave = true;
 
+  /// the default of whether or not this will save
+  /// 
+  /// most functions that save have an optional parameter for saving with a default of true
+  /// this value only affects those functions that don't such as the [] operator
+  set shouldSave(bool shouldSave){
+    _defaultShouldSave = shouldSave;
+    _shouldSave = shouldSave;
+  }
+  
+  bool get shouldSave => _shouldSave;
+
+  /// called when a value is added to the map
+  /// 
+  /// if the element has the [StorageAccess] mixin its storage reference is set to this
   void _addedVal(V val){
     if(val == null)
       return;
@@ -638,6 +690,9 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
       val.storageReference = this;
   }
 
+  /// called when a value is removed from the list
+  /// 
+  /// if the element has the [StorageAccess] mixin its storage reference is set to null
   void _removedVal(V val){
     if(val == null)
       return;
@@ -648,6 +703,8 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   @override
   void onDataRecieved(Map data) {
     super.onDataRecieved(data);
+    // if the value type has the StorageAccess mixin then the references of the 
+    //values are set to this
     if(V is StorageAccess){
       for(StorageAccess val in data.values){
         val.storageReference = this;
@@ -690,7 +747,7 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     _shouldNotify = true;
     _notify();
 
-    _shouldSave = true;
+    _shouldSave = _defaultShouldSave;
     if(save){
       write();
     }
@@ -708,7 +765,7 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     _shouldNotify = true;
     _notify();
 
-    _shouldSave = true;
+    _shouldSave = _defaultShouldSave;
     if(save){
       write();
     }
@@ -794,6 +851,16 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     _notify();
   }
 
+  @override
+  void forEach(void Function(K,V) f,{bool save = true, bool shouldNotify = true}) {
+    _data.forEach(f);
+    if(save){
+      write();
+    }
+    if(shouldNotify){
+      _notify();
+    }
+  }
 
 
 
@@ -818,11 +885,6 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   Iterable<MapEntry<K, V>> get entries => _data.entries;
 
   @override
-  void forEach(void Function(K,V) f) {
-    _data.forEach(f);
-  }
-
-  @override
   bool get isEmpty => _data.isEmpty;
 
   @override
@@ -845,6 +907,11 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
 }
 
 
+/// adds some optimizations to the [MapStorage] mixin if the data is stored as a map 
+/// that can have values accessed independently using [ExternalMapIO]
+/// 
+/// this allows the user to modify and save specific entries rather than 
+/// saving the whole map when a value is changed
 mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, MapStorage<Map<KW,VW>, KR,VR>{
 
   @override
@@ -866,6 +933,7 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
       this[key] = other[key];
     }
     _shouldNotify = true;
+    _shouldSave = _defaultShouldSave;
     _notify();
   }
 
@@ -877,6 +945,7 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
       this[entry.key] = entry.value;
     }
     _shouldNotify = true;
+    _shouldSave = _defaultShouldSave;
     _notify();
   }
 
@@ -987,7 +1056,8 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
     _notify();
   }
 
-  Future<bool> saveEntry(KR key){
+  /// writes the entry with the given [key]
+  Future<bool> writeEntry(KR key){
     return setEntry(key, _data[key]);
   }
 
