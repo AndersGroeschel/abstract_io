@@ -12,8 +12,7 @@ mixin Encodable{
 
   /// creates a new object based on the given [json]
   /// 
-  /// it is best practice that the new object returned by
-  /// [decode] is not related to this
+  /// the new object returned by [decode] should not be related to this
   Encodable decode(Map<String, dynamic> json);
 
   /// default implementation returns a new deep copy of this
@@ -24,12 +23,14 @@ mixin Encodable{
 
 }
 
+/// translates an [Encodable] object into a String
 class EncodableStringTranslator<T extends Encodable> extends Translator<String, T>{
 
-  final T encoder;
+  /// the value that will be used for decodeing the JSON
+  final T decoder;
 
   const EncodableStringTranslator(
-    this.encoder
+    this.decoder
   );
 
   @override
@@ -39,17 +40,18 @@ class EncodableStringTranslator<T extends Encodable> extends Translator<String, 
   
   @override
   T translateWritable(String writable) {
-    return encoder.decode(json.decode(writable));
+    return decoder.decode(json.decode(writable));
   }
 
 }
 
+/// translates a list of [Encodable] objects to a list of JSON maps
 class EncodableMapListTranslator<T extends Encodable> extends Translator<List<Map<String, dynamic>>, List<T>>{
 
-  final T encoder;
+  final T decoder;
 
   const EncodableMapListTranslator(
-    this.encoder
+    this.decoder
   );
 
   @override
@@ -69,18 +71,20 @@ class EncodableMapListTranslator<T extends Encodable> extends Translator<List<Ma
   List<T> translateWritable(List<Map<String, dynamic>> writable) {
     List<T> vals = [];
     for(Map<String, dynamic> val in writable){
-      vals.add(encoder.decode(val));
+      vals.add(decoder.decode(val));
     }
     return vals;
   }
 
 }
 
+
+/// translates an [Encodable] object into a JSON Map
 class EncodableMapTranslator<T extends Encodable> extends Translator<Map<String, dynamic>, T>{
-  final T encoder;
+  final T decoder;
 
   const EncodableMapTranslator(
-    this.encoder
+    this.decoder
   );
 
   @override
@@ -90,7 +94,7 @@ class EncodableMapTranslator<T extends Encodable> extends Translator<Map<String,
   
   @override
   T translateWritable(Map<String, dynamic> writable) {
-    return encoder.decode(writable);
+    return decoder.decode(writable);
   }
 }
 

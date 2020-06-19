@@ -4,14 +4,15 @@ import 'package:abstract_io/abstract_io/abstract_base.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
-//TODO Documentation
-
+/// gives a default value for a translator
+/// 
+/// if no writable is passed to this for translating then the [defaultValue] is returned
 mixin TranslatorDefaultValue<W,R> on Translator<W,R>{
   R get defaultValue;
 
   @override
   @mustCallSuper
-  translateWritable(writable) {
+  R translateWritable(writable) {
     R val;
     try {
       val = super.translateWritable(writable);
@@ -29,9 +30,16 @@ mixin TranslatorDefaultValue<W,R> on Translator<W,R>{
 }
 
 
+/// links two translators together using an in between type [B]
+/// 
+/// essentially takes two translators and feeds them into each other to get
+/// the full translation 
 class TranslatorLink<W,B,R> extends Translator<W,R>{
 
+  /// translates between the writable type [W] and the inbetween type [B]
   final Translator<W,B> writingEnd;
+  
+  /// translates between the readable type [R] to the inbetween type [B]
   final Translator<B,R> readingEnd;
 
   const TranslatorLink(this.readingEnd, this.writingEnd);
@@ -48,10 +56,13 @@ class TranslatorLink<W,B,R> extends Translator<W,R>{
   
 }
 
-
+/// creates a translator to translate between readable types and writable types
 class TranslatorMap<KW,VW, KR,VR> extends Translator<Map<KW,VW>, Map<KR,VR>>{
 
+  /// the translator used to translate the key between it's readable type and writable type
   final Translator<KW,KR> keyTranslator;
+
+  /// the translator used to translate the value between it's readable type and writable type
   final Translator<VW,VR> valueTranslator;
 
   const TranslatorMap(
@@ -84,7 +95,11 @@ class TranslatorMap<KW,VW, KR,VR> extends Translator<Map<KW,VW>, Map<KR,VR>>{
 }
 
 
+/// does nothing to the value and returns it back
 class SameTypeTranslator<T> extends Translator<T,T>{
+
+  const SameTypeTranslator();
+
   @override
   T translateReadable(T readable) {
     return readable;
@@ -94,15 +109,20 @@ class SameTypeTranslator<T> extends Translator<T,T>{
   T translateWritable(T writable) {
     return writable;
   }
+
+  @override
+  dynamic translate(dynamic data) {
+    return data;
+  }
   
 }
 
 
+/// translates between a JSON map and a String
 class JSONStringTranslator extends Translator<String, dynamic>{
 
   const JSONStringTranslator();
 
-  
   @override
   String translateReadable(readable) {
     return json.encode(readable);
@@ -116,8 +136,10 @@ class JSONStringTranslator extends Translator<String, dynamic>{
 }
 
 
+/// translates a list of bytes to a [MemoryImage]
 class ImageByteTranslator extends Translator<Uint8List, MemoryImage>{
 
+  /// the scale of the image
   double _scale;
 
   ImageByteTranslator({
@@ -125,6 +147,7 @@ class ImageByteTranslator extends Translator<Uint8List, MemoryImage>{
   }): _scale = scale ?? 1,
     super();
 
+  /// sets the scale of the image
   set scale(double s){
     if(s == null){
       return;
