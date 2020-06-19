@@ -1,7 +1,7 @@
 name: abstract_io
-description: A new Flutter package project.
+description: Abstract IO is designed to simplify and generalize saving data both localy and externaly
 version: 0.1.0
-author:
+author: Anders Groeschel
 homepage:
 
 environment:
