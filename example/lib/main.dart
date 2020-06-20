@@ -12,6 +12,9 @@ class StringIntTranslator extends Translator<String, int>{
 
   @override
   int translateWritable(String writable) {
+    if(writable == null){
+      return null;
+    }
     return int.parse(writable);
   }
 }
