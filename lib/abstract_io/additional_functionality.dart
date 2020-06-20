@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'abstract_base.dart';
+import 'package:abstract_io/abstract_io.dart';
 
-/// makes this [AbstractIO] [listenable]
+/// makes this [AbstractIO] [Listenable]
 ///
 /// this will notify listeners whenever new data is recieved via the
 /// [onDataRecieved] function

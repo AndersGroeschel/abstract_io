@@ -1,4 +1,4 @@
-import 'abstract_base.dart';
+import 'package:abstract_io/abstract_io.dart';
 
 /// a mixin on [AbstractIO] to allow this to easily read and write values without any
 /// purposeful storage of a value

@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:typed_data' show Uint8List;
 import 'package:abstract_io/abstract_io/abstract_base.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/rendering.dart';
+import 'package:flutter/rendering.dart' show MemoryImage;
 
 /// gives a default value for a translator
 ///
@@ -124,7 +124,7 @@ class ImageByteTranslator extends Translator<Uint8List, MemoryImage> {
       : _scale = scale ?? 1,
         super();
 
-  /// sets the scale of the image
+  /// sets the scale of the image when it is loaded
   set scale(double s) {
     if (s == null) {
       return;

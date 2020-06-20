@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' show Random;
 import 'package:abstract_io/abstract_io.dart';
 import 'package:flutter/foundation.dart';
 
@@ -16,7 +16,7 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
     return sendData(_data);
   }
 
-  /// loads the value into [_data] using the [ioInterfaces] requestData function
+  /// loads the value into [_data] using the [ioInterface]'s requestData function
   Future<void> load() async {
     return ioInterface.requestData();
   }

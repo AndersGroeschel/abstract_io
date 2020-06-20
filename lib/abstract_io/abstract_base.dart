@@ -1,12 +1,12 @@
-import 'package:abstract_io/translators/translators.dart';
+import 'package:abstract_io/abstract_io.dart';
 import 'package:flutter/foundation.dart';
 
 /// the base class for transfering data in and out of the program
 ///
-/// [W] is meant to be the type the data is stored as and [R] is the type that will be
+/// W is meant to be the type the data is stored as and R is the type that will be
 /// commonly used and manipulated throughout the program
 ///
-/// practically [AbstractIO] is not functional on its own and should have exclusively
+/// [AbstractIO] is not functional on its own and should have
 /// the [ValueStorage] or the [ValueFetcher] mixin to provide functionality
 ///
 /// [ValueStorage] allows the translated object to be stored and has additional mixins
@@ -16,14 +16,14 @@ import 'package:flutter/foundation.dart';
 /// [ValueFetcher] is just meant to be an object that provides the user
 /// easy access to input and output while not storing any data
 abstract class AbstractIO<W, R> {
-  /// translates the stored data from the type it was stored in [W] to the type
-  /// that will be used [R]
+  /// translates the stored data from the type it was stored in (W) to the type
+  /// that will be used (R)
   ///
   /// see [Translator] for more information
   final Translator<W, R> translator;
 
   /// provides an interface to send, recieve, request, and delete data of the
-  /// writeable type [W]
+  /// writeable type W
   ///
   /// see [IOInterface] for more information
   ///
@@ -100,10 +100,10 @@ abstract class ExternalIO<W, R> extends AbstractIO<W, R> {
 /// to take full advantage of seperate entry storage
 abstract class ExternalMapIO<KW, VW, KR, VR>
     extends ExternalIO<Map<KW, VW>, Map<KR, VR>> {
-  /// the translator for the key from the key writable [KW] and the key readable [KR]
+  /// the translator for the key from the key writable (KW) and the key readable (KR)
   Translator<KW, KR> keyTranslator;
 
-  /// the translator for the value from the value writable [VW] and the value readable [VR]
+  /// the translator for the value from the value writable (VW) and the value readable (VR)
   Translator<VW, VR> valueTranslator;
 
   ExternalMapIO(ExternalMapIOInterface<KW, VW> ioInterface,
@@ -145,7 +145,7 @@ abstract class ExternalMapIO<KW, VW, KR, VR>
             .getEntry(keyTranslator.translateReadable(key)));
   }
 
-  /// delets the entry with the given key
+  /// delets the entry with the given [key]
   ///
   /// returns whether or not the deletion was successful,
   /// a value of false does not necessarily mean the data was not deleted
@@ -165,7 +165,7 @@ abstract class ExternalMapIO<KW, VW, KR, VR>
   }
 }
 
-/// takes two data types a readable [R] and a writable [W] and translates between
+/// takes two data types a readable R and a writable (W) and translates between
 ///
 /// this proccess should be reversible such that if readable data is translated
 /// to writable data using [translateReadable] then [translateWritable] should
@@ -217,9 +217,9 @@ class _CastingTranslator<W, R> extends Translator<W, R> {
   }
 }
 
-/// allows you to send data request data and recieve data all of type [W]
+/// allows you to send data request data and recieve data all of type W
 ///
-/// it is best practice that [W] should be the type that the data is sent as
+/// it is best practice that W should be the type that the data is sent as
 /// such as a String or a list of bytes for files
 ///
 /// this does need to be specific to files, it could be used to interface with servers
@@ -249,9 +249,9 @@ abstract class IOInterface<W> {
   Future<bool> deleteData();
 }
 
-/// allows you to send data request data and recieve data all of type [W]
+/// allows you to send data request data and recieve data all of type W
 ///
-/// it is best practice that [W] should be the type that the data is sent as
+/// it is best practice that W should be the type that the data is sent as
 /// such as a String or a list of bytes for files
 ///
 /// [ExternalIOInterface] adds the functionality to [lockAndUpdate] data,
@@ -267,20 +267,20 @@ abstract class ExternalIOInterface<W> extends IOInterface<W> {
   ///
   /// 2) request new data
   ///
-  /// 3) translate data of type [W] into type [R] using the [translator]
+  /// 3) translate data of type W into type R using the [translator]
   ///
   /// 4) [update] the data
   ///
-  /// 5) translate the update data of type [R] back into type [W]
+  /// 5) translate the update data of type R back into type W
   ///
   /// 6) write the data and unlock
   Future<R> lockAndUpdate<R>(R Function(R newData) update,
       {Translator<W, R> translator});
 }
 
-/// allows you to send data request data and recieve data all of type [W]
+/// allows you to send data request data and recieve data all of type W
 ///
-/// it is best practice that [W] should be the type that the data is sent as
+/// it is best practice that W should be the type that the data is sent as
 /// such as a String or a list of bytes for files
 ///
 /// [ExternalIOInterface] adds the functionality to [lockAndUpdate] data,
@@ -311,6 +311,6 @@ abstract class ExternalMapIOInterface<KW, VW>
   /// returns whether or not it was succeful in adding
   Future<bool> setEntry(KW key, VW value);
 
-  /// create a new entry with the given [value] and return its associated [key]
+  /// create a new entry with the given [value] and return its associated key
   Future<KW> addEntry(VW value);
 }

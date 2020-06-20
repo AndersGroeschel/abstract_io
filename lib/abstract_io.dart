@@ -1,3 +1,7 @@
+/// Abstract IO is designed to simplify and generalize saving data both localy and externaly
+/// 
+/// start using it by extending the [AbstractIO] class and mixing in either
+/// [ValueStorage] or [ValueFetcher]
 library abstract_io;
 
 export 'abstract_io/abstract_base.dart';
