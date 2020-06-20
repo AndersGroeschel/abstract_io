@@ -1,21 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'abstract_base.dart';
 
-/// makes this [AbstractIO] [listenable] 
-/// 
-/// this will notify listeners whenever new data is recieved via the 
+/// makes this [AbstractIO] [listenable]
+///
+/// this will notify listeners whenever new data is recieved via the
 /// [onDataRecieved] function
-/// 
+///
 /// [ValueListenableSupport] implements [ValueListenable] and is therefor
 /// better to use but it can only be mixedin onto a [ValueStorage]
-mixin ListenerSupport<W,R> on AbstractIO<W,R> implements Listenable{
-
+mixin ListenerSupport<W, R> on AbstractIO<W, R> implements Listenable {
   /// the list of listeners
   List<VoidCallback> _listeners = [];
 
   /// iterates through all the listeners and calls them / notifies them
-  void notifyListeners(){
-    for(VoidCallback listener in _listeners){
+  void notifyListeners() {
+    for (VoidCallback listener in _listeners) {
       listener();
     }
   }
@@ -23,12 +22,12 @@ mixin ListenerSupport<W,R> on AbstractIO<W,R> implements Listenable{
   /// adds a [listener] to the list of listeners if it is not null
   @override
   void addListener(listener) {
-    if(listener == null){
+    if (listener == null) {
       return;
     }
     _listeners.add(listener);
   }
-  
+
   /// removes the [listener] from the list of listeners
   @override
   void removeListener(listener) {
@@ -41,30 +40,22 @@ mixin ListenerSupport<W,R> on AbstractIO<W,R> implements Listenable{
     super.onDataRecieved(data);
     notifyListeners();
   }
-
-
 }
 
 /// gives a default value for this [AbstractIO]
-/// 
-/// the [DefaultValue] mixin should be one of the last mixins applied for 
+///
+/// the [DefaultValue] mixin should be one of the last mixins applied for
 /// it to work properly
-/// 
+///
 /// when [onDataRecieved] is called with a null value then the [defaultValue] is
 /// used instead for super.onDataRecieved
-mixin DefaultValue<W,R> on AbstractIO<W,R>{
-
+mixin DefaultValue<W, R> on AbstractIO<W, R> {
   /// the default value provided when none is passed in
   R get defaultValue;
-
 
   @override
   @mustCallSuper
   void onDataRecieved(data) {
-    super.onDataRecieved(data?? defaultValue);
+    super.onDataRecieved(data ?? defaultValue);
   }
 }
-
-
-
-

@@ -1,15 +1,13 @@
 import 'abstract_base.dart';
 
-
 /// a mixin on [AbstractIO] to allow this to easily read and write values without any
 /// purposeful storage of a value
-mixin ValueFetcher<W,R> on AbstractIO<W,R>{
-
+mixin ValueFetcher<W, R> on AbstractIO<W, R> {
   /// temporary value so that data from [onDataRecieved] can be transferred easily
   R _tempVal;
 
   /// write [data] using the [ioInterface] given to this
-  Future<bool> write(R data){
+  Future<bool> write(R data) {
     return sendData(data);
   }
 
@@ -18,7 +16,7 @@ mixin ValueFetcher<W,R> on AbstractIO<W,R>{
     await ioInterface.requestData();
     R val = _tempVal;
     _tempVal = null;
-    if(val is FetcherAccess){
+    if (val is FetcherAccess) {
       val._io = this;
     }
     return val;
@@ -29,18 +27,13 @@ mixin ValueFetcher<W,R> on AbstractIO<W,R>{
   void onDataRecieved(R data) {
     _tempVal = data;
   }
-
 }
 
 /// a mixin that allows this to write itself using the [ValueFetcher] that retrieved it
-mixin FetcherAccess{
-
+mixin FetcherAccess {
   /// a reference to the [ValueFetcher] that retrieved this
   ValueFetcher _io;
 
   /// writes this using the [ValueFetcher] that retrieved it
   Future<bool> write() => _io.write(this);
 }
-
-
-

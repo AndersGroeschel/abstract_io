@@ -2,13 +2,12 @@ import 'dart:math';
 import 'package:abstract_io/abstract_io.dart';
 import 'package:flutter/foundation.dart';
 
-
 /// a mixin on [AbstractIO] that stores the loaded value for you
-/// 
+///
 /// by itself this mixin isn't that powerful but it sets the stage for more useful
-/// functionality with [ListStorage] and [MapStorage] to allow for iterable forms of 
+/// functionality with [ListStorage] and [MapStorage] to allow for iterable forms of
 /// storage or [ValueAccess] for direct access to the value
-mixin ValueStorage<W,R> on AbstractIO<W,R>{
+mixin ValueStorage<W, R> on AbstractIO<W, R> {
   /// the stored data that was loaded
   R _data;
 
@@ -27,24 +26,22 @@ mixin ValueStorage<W,R> on AbstractIO<W,R>{
   void onDataRecieved(R data) {
     _data = data;
   }
-
 }
 
-
 /// a mixin that allows this to access the [_data] that is being stored
-mixin ValueAccess<W,R> on ValueStorage<W,R>{
-
+mixin ValueAccess<W, R> on ValueStorage<W, R> {
   /// the current value stored in this
-  R get value{
-    if(_data == null){
-      throw(StateError("Current value is null and needs to be loaded or set before use"));
+  R get value {
+    if (_data == null) {
+      throw (StateError(
+          "Current value is null and needs to be loaded or set before use"));
     }
     return _data;
   }
 
   /// sets the current value to [newVal]
-  set value(R newVal){
-    if(_data is StorageAccess){
+  set value(R newVal) {
+    if (_data is StorageAccess) {
       (_data as StorageAccess)?.storageReference = null;
       (newVal as StorageAccess).storageReference = this;
     }
@@ -56,22 +53,22 @@ mixin ValueAccess<W,R> on ValueStorage<W,R>{
   @mustCallSuper
   void onDataRecieved(data) {
     super.onDataRecieved(data);
-    if(_data is StorageAccess){
+    if (_data is StorageAccess) {
       (_data as StorageAccess).storageReference = this;
     }
   }
 }
 
-/// gives [ValueStorage] an intial value 
-/// 
+/// gives [ValueStorage] an intial value
+///
 /// this value is set in the function [initialize] which is called in the initialization
 /// of [AbstractIO]
-/// 
+///
 /// the initial value will likely be overridden when the value is loaded
-/// 
+///
 /// the [ListStorage] and [MapStorage] mixins initialize [_data] to and empty list
 /// and an emtpy map respectively
-mixin InitialValue<W,R> on ValueStorage<W,R>{
+mixin InitialValue<W, R> on ValueStorage<W, R> {
   R get initialValue;
 
   @override
@@ -83,30 +80,30 @@ mixin InitialValue<W,R> on ValueStorage<W,R>{
 }
 
 /// a mixin that makes the value storage [ValueListenable]
-/// 
+///
 /// every time [onDataRecieved] is called the listeners are notified
-/// 
-/// additionally the [ListStorage] and [MapStorage] mixins notify listeners when 
+///
+/// additionally the [ListStorage] and [MapStorage] mixins notify listeners when
 /// a value is added, removed and in some other cases as well
-mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenable<R>{
-
+mixin ValueListenableSupport<W, R> on ValueStorage<W, R>
+    implements ValueListenable<R> {
   List<VoidCallback> _listeners = [];
 
   /// notifies listeners that an update has occured
-  void notifyListeners(){
-    for(VoidCallback listener in _listeners){
+  void notifyListeners() {
+    for (VoidCallback listener in _listeners) {
       listener();
     }
   }
 
   @override
   void addListener(listener) {
-    if(listener == null){
+    if (listener == null) {
       return;
     }
     _listeners.add(listener);
   }
-  
+
   @override
   void removeListener(listener) {
     _listeners.remove(listener);
@@ -123,94 +120,77 @@ mixin ValueListenableSupport<W,R> on ValueStorage<W,R> implements ValueListenabl
   R get data => _data;
 }
 
-
-
-
-
-/// a mixin that allows this to call the [write] function for the 
+/// a mixin that allows this to call the [write] function for the
 /// [ValueStorage] it is in
-mixin StorageAccess{
-
-  /// a reference to the [ValueStorage] this came from 
+mixin StorageAccess {
+  /// a reference to the [ValueStorage] this came from
   ValueStorage storageReference;
 
   /// saves this using the [ValueStorage] that stores it
   Future<bool> write() => storageReference.write();
 }
 
-
-
-
-
-/// adds the functionality of a list to this [ValueStorage] 
-/// 
+/// adds the functionality of a list to this [ValueStorage]
+///
 /// automatically saves this list when a it is updated unless otherwise specified
-/// 
+///
 /// automatically notifies listeners of an update if this has the [ListenerSupport] or
 /// [ValueListenableSupport] mixin
-mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
-
-
+mixin ListStorage<W, E> on ValueStorage<W, List<E>> implements List<E> {
   bool _shouldNotify = true;
 
   /// notifies listeners if this is a [ListenerSupport] or a [ValueListenableSupport]
-  void _notify(){
-    if(_shouldNotify){
-      if(this is ListenerSupport){
+  void _notify() {
+    if (_shouldNotify) {
+      if (this is ListenerSupport) {
         (this as ListenerSupport).notifyListeners();
-      }else if(this is ValueListenableSupport){
+      } else if (this is ValueListenableSupport) {
         (this as ValueListenableSupport).notifyListeners();
       }
     }
   }
-  
+
   bool _defaultShouldSave = true;
   bool _shouldSave = true;
 
   /// the default of whether or not this will save
-  /// 
+  ///
   /// most functions that save have an optional parameter for saving with a default of true
   /// this value only affects those functions that don't such as the [] operator
-  set shouldSave(bool shouldSave){
+  set shouldSave(bool shouldSave) {
     _defaultShouldSave = shouldSave;
     _shouldSave = shouldSave;
   }
 
   bool get shouldSave => _shouldSave;
 
-  
-
   /// called when a value is added to the list
-  /// 
+  ///
   /// if the element has the [StorageAccess] mixin its storage reference is set to this
   @protected
-  void _addedToList(E element){
-    if(element == null)
-      return;
+  void _addedToList(E element) {
+    if (element == null) return;
 
-    if(element is StorageAccess)
-      element.storageReference = this;
+    if (element is StorageAccess) element.storageReference = this;
   }
 
   /// called when a value is removed from the list
-  /// 
+  ///
   /// if the element has the [StorageAccess] mixin its storage reference is set to null
   @protected
-  void _removedFromList(E element){
-    if(element == null)
-      return;
-    if(element is StorageAccess)
-      element.storageReference = null;
+  void _removedFromList(E element) {
+    if (element == null) return;
+    if (element is StorageAccess) element.storageReference = null;
   }
 
   @override
   @mustCallSuper
   void onDataRecieved(List<E> data) {
-   super.onDataRecieved(data);
-   // if the values of the list have the StorageAccess mixin then their references 
-   // are set to this
-   if(E is StorageAccess){
-      for(StorageAccess d in _data.cast<StorageAccess>()){
+    super.onDataRecieved(data);
+    // if the values of the list have the StorageAccess mixin then their references
+    // are set to this
+    if (E is StorageAccess) {
+      for (StorageAccess d in _data.cast<StorageAccess>()) {
         d.storageReference = this;
       }
     }
@@ -222,109 +202,105 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     super.initialize();
     _data = <E>[];
   }
-  
+
   @override
-  E operator [] (int index) => _data[index];
-  
+  E operator [](int index) => _data[index];
+
   @override
-  void operator []= (int index, E newVal) async {
+  void operator []=(int index, E newVal) async {
     _removedFromList(_data[index]);
     _addedToList(newVal);
 
     _data[index] = newVal;
     _notify();
-    if(_shouldSave){
+    if (_shouldSave) {
       write();
     }
   }
 
-  
   @override
-  int get length{
-    if(_data == null){
+  int get length {
+    if (_data == null) {
       return 0;
     }
     return _data.length;
   }
-  
+
   @override
   E get last => _data.last;
-  
+
   @override
   E get first => _data.first;
 
-
-  
   @override
   void add(E val, {bool save = true}) async {
     _addedToList(val);
     _data.add(val);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
-  
+
   @override
-  bool remove(Object val, {bool save = true}){
-    if(val is E){
+  bool remove(Object val, {bool save = true}) {
+    if (val is E) {
       bool b = _data.remove(val);
-      if(b){
+      if (b) {
         _removedFromList(val);
       }
-      if(save){
+      if (save) {
         write();
       }
       _notify();
       return b;
     }
-    return false; 
+    return false;
   }
-  
+
   @override
-  E removeAt(int index, {bool save = true}){
+  E removeAt(int index, {bool save = true}) {
     E t = _data.removeAt(index);
     _removedFromList(t);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
     return t;
   }
-  
+
   @override
   void addAll(Iterable<E> values, {bool save = true}) async {
-    if(values == null){
+    if (values == null) {
       return;
     }
-    for(E val in values){
+    for (E val in values) {
       _addedToList(val);
       _data.add(val);
     }
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
 
   /// removes all the values and writes the list to the disk
-  void removeAll(Iterable<E> values, {bool save = true}){
+  void removeAll(Iterable<E> values, {bool save = true}) {
     removeWhere((val) => values.contains(val), save: save);
   }
 
-
   /// if the two values are the same nothing happens
-  /// otherwise the oldVal is removed and replaced 
+  /// otherwise the oldVal is removed and replaced
   /// with the newVal if the oldVal was in the list
   /// then writes the list
-  /// 
+  ///
   /// returns whether or not the replace was a success
-  bool replace(E oldVal, E newVal, {bool save = true}){
-    if(oldVal == null || newVal == null){
+  bool replace(E oldVal, E newVal, {bool save = true}) {
+    if (oldVal == null || newVal == null) {
       return false;
     }
-    int index = _data.indexOf(oldVal); 
-    if(index == -1){
+    int index = _data.indexOf(oldVal);
+    if (index == -1) {
       return false;
     }
     _shouldSave = save;
@@ -336,33 +312,34 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   @override
   void setAll(int index, Iterable<E> iterable, {bool save = true}) async {
     int last = index + iterable.length;
-    if(last > length){
+    if (last > length) {
       last = length;
     }
     Iterator<E> iter = iterable.iterator;
     _shouldSave = false;
     _shouldNotify = false;
-    for(int i = index; i < last; i++){
+    for (int i = index; i < last; i++) {
       iter.moveNext();
       this[index] = iter.current;
     }
     _shouldSave = _defaultShouldSave;
     _shouldNotify = true;
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
 
   @override
-  void setRange(int start, int end, Iterable<E> iterable, [int skipCount = 0, bool save = true]) async {
-    for(E element in sublist(start, end)){
+  void setRange(int start, int end, Iterable<E> iterable,
+      [int skipCount = 0, bool save = true]) async {
+    for (E element in sublist(start, end)) {
       _removedFromList(element);
     }
     final int len = end - start;
     int index = 0;
-    for(E element in iterable.skip(skipCount)){
-      if(len < index){
+    for (E element in iterable.skip(skipCount)) {
+      if (len < index) {
         break;
       }
       index++;
@@ -370,7 +347,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     }
 
     _data.setRange(start, end, iterable, skipCount);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -379,7 +356,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   @override
   void shuffle([Random random, bool save = true]) async {
     _data.shuffle(random);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -387,11 +364,11 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   void clear({bool save = true}) {
-    for(E val in _data){
+    for (E val in _data) {
       _removedFromList(val);
     }
     _data.clear();
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -399,12 +376,12 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   void fillRange(int start, int end, [E fillValue, bool save = true]) async {
-    for(E val in sublist(start, end)){
+    for (E val in sublist(start, end)) {
       _removedFromList(val);
     }
     _addedToList(fillValue);
     _data.fillRange(start, end, fillValue);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -415,7 +392,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     _removedFromList(_data.first);
     _addedToList(value);
     _data.first = value;
-    if(_shouldSave){
+    if (_shouldSave) {
       write();
     }
     _notify();
@@ -426,7 +403,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
     _removedFromList(_data.last);
     _addedToList(value);
     _data.last = value;
-    if(_shouldSave){
+    if (_shouldSave) {
       write();
     }
     _notify();
@@ -436,7 +413,7 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   void insert(int index, E element, {bool save = true}) async {
     _addedToList(element);
     _data.insert(index, element);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -444,11 +421,11 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   void insertAll(int index, Iterable<E> iterable, {bool save = true}) async {
-    for(E val in iterable){
+    for (E val in iterable) {
       _addedToList(val);
     }
     _data.insertAll(index, iterable);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -456,23 +433,23 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   set length(int newLength) {
-    if(newLength < length){
-      for(int i = newLength; i < length; i++){
+    if (newLength < length) {
+      for (int i = newLength; i < length; i++) {
         _removedFromList(this[i]);
       }
     }
     _data.length = length;
-    if(_shouldSave){
+    if (_shouldSave) {
       write();
     }
     _notify();
   }
 
   @override
-  E removeLast({bool save = true}){
+  E removeLast({bool save = true}) {
     E val = _data.removeLast();
     _removedFromList(val);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -481,11 +458,11 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   void removeRange(int start, int end, {bool save = true}) async {
-    for(E val in sublist(start, end)){
+    for (E val in sublist(start, end)) {
       _removedFromList(val);
     }
     _data.removeRange(start, end);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -493,26 +470,27 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   void removeWhere(bool Function(E element) test, {bool save = true}) async {
-    for(E val in where(test)){
+    for (E val in where(test)) {
       _removedFromList(val);
     }
     _data.removeWhere(test);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
 
   @override
-  void replaceRange(int start, int end, Iterable<E> replacement, {bool save = true}) async {
-    for(E val in sublist(start, end)){
+  void replaceRange(int start, int end, Iterable<E> replacement,
+      {bool save = true}) async {
+    for (E val in sublist(start, end)) {
       _removedFromList(val);
     }
-    for(E val in replacement){
+    for (E val in replacement) {
       _addedToList(val);
     }
     _data.replaceRange(start, end, replacement);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -520,18 +498,15 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   void retainWhere(bool Function(E element) test, {bool save = true}) async {
-    for(E val in where((E element) => !test(element))){
+    for (E val in where((E element) => !test(element))) {
       _removedFromList(val);
     }
     _data.retainWhere(test);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
-
-
-
 
   @override
   Iterator<E> get iterator => _data.iterator;
@@ -558,10 +533,12 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   Iterable<T> expand<T>(Iterable<T> Function(E element) f) => _data.expand(f);
 
   @override
-  E firstWhere(bool Function(E element) test, {E Function() orElse}) => _data.firstWhere(test, orElse: orElse);
+  E firstWhere(bool Function(E element) test, {E Function() orElse}) =>
+      _data.firstWhere(test, orElse: orElse);
 
   @override
-  T fold<T>(T initialValue, T Function(T previousValue, E element) combine) => _data.fold(initialValue, combine);
+  T fold<T>(T initialValue, T Function(T previousValue, E element) combine) =>
+      _data.fold(initialValue, combine);
 
   @override
   Iterable<E> followedBy(Iterable<E> other) => _data.followedBy(other);
@@ -576,7 +553,8 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   int indexOf(E element, [int start = 0]) => _data.indexOf(element);
 
   @override
-  int indexWhere(bool Function(E element) test, [int start = 0]) => _data.indexWhere(test, start);
+  int indexWhere(bool Function(E element) test, [int start = 0]) =>
+      _data.indexWhere(test, start);
 
   @override
   bool get isEmpty => _data.isEmpty;
@@ -591,10 +569,12 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   int lastIndexOf(E element, [int start]) => _data.lastIndexOf(element, start);
 
   @override
-  int lastIndexWhere(bool Function(E element) test, [int start]) => _data.lastIndexWhere(test, start);
+  int lastIndexWhere(bool Function(E element) test, [int start]) =>
+      _data.lastIndexWhere(test, start);
 
   @override
-  E lastWhere(bool Function(E element) test, {E Function() orElse}) => _data.lastWhere(test, orElse: orElse);
+  E lastWhere(bool Function(E element) test, {E Function() orElse}) =>
+      _data.lastWhere(test, orElse: orElse);
 
   @override
   Iterable<T> map<T>(T Function(E e) f) => _data.map(f);
@@ -609,7 +589,8 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
   E get single => _data.single;
 
   @override
-  E singleWhere(bool Function(E element) test, {E Function() orElse}) => _data.singleWhere(test, orElse: orElse);
+  E singleWhere(bool Function(E element) test, {E Function() orElse}) =>
+      _data.singleWhere(test, orElse: orElse);
 
   @override
   Iterable<E> skip(int count) => _data.skip(count);
@@ -640,26 +621,23 @@ mixin ListStorage<W,E> on ValueStorage<W,List<E>> implements List<E>{
 
   @override
   Iterable<T> whereType<T>() => _data.whereType<T>();
-  
 }
 
-
-/// adds the functionality of a Map to this [ValueStorage] 
-/// 
+/// adds the functionality of a Map to this [ValueStorage]
+///
 /// automatically saves this map when a value is updated unless otherwise specified
-/// 
+///
 /// automatically notifies listeners of an update if this has the [ListenerSupport] or
 /// [ValueListenableSupport] mixin
-mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
-
+mixin MapStorage<W, K, V> on ValueStorage<W, Map<K, V>> implements Map<K, V> {
   bool _shouldNotify = true;
 
   /// notifies listeners if this is a [ListenerSupport] or a [ValueListenableSupport]
-  void _notify(){
-    if(_shouldNotify){
-      if(this is ListenerSupport){
+  void _notify() {
+    if (_shouldNotify) {
+      if (this is ListenerSupport) {
         (this as ListenerSupport).notifyListeners();
-      }else if(this is ValueListenableSupport){
+      } else if (this is ValueListenableSupport) {
         (this as ValueListenableSupport).notifyListeners();
       }
     }
@@ -669,43 +647,39 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   bool _shouldSave = true;
 
   /// the default of whether or not this will save
-  /// 
+  ///
   /// most functions that save have an optional parameter for saving with a default of true
   /// this value only affects those functions that don't such as the [] operator
-  set shouldSave(bool shouldSave){
+  set shouldSave(bool shouldSave) {
     _defaultShouldSave = shouldSave;
     _shouldSave = shouldSave;
   }
-  
+
   bool get shouldSave => _shouldSave;
 
   /// called when a value is added to the map
-  /// 
+  ///
   /// if the element has the [StorageAccess] mixin its storage reference is set to this
-  void _addedVal(V val){
-    if(val == null)
-      return;
-    if(val is StorageAccess)
-      val.storageReference = this;
+  void _addedVal(V val) {
+    if (val == null) return;
+    if (val is StorageAccess) val.storageReference = this;
   }
 
   /// called when a value is removed from the list
-  /// 
+  ///
   /// if the element has the [StorageAccess] mixin its storage reference is set to null
-  void _removedVal(V val){
-    if(val == null)
-      return;
-    if(val is StorageAccess)
-      val.storageReference = null;
+  void _removedVal(V val) {
+    if (val == null) return;
+    if (val is StorageAccess) val.storageReference = null;
   }
 
   @override
   void onDataRecieved(Map data) {
     super.onDataRecieved(data);
-    // if the value type has the StorageAccess mixin then the references of the 
+    // if the value type has the StorageAccess mixin then the references of the
     //values are set to this
-    if(V is StorageAccess){
-      for(StorageAccess val in data.values){
+    if (V is StorageAccess) {
+      for (StorageAccess val in data.values) {
         val.storageReference = this;
       }
     }
@@ -715,7 +689,7 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   @mustCallSuper
   void initialize() {
     super.initialize();
-    _data = <K,V>{};
+    _data = <K, V>{};
   }
 
   @override
@@ -728,18 +702,18 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     _removedVal(_data[key]);
     _addedVal(value);
     _data[key] = value;
-    if(_shouldSave){
+    if (_shouldSave) {
       write();
     }
     _notify();
   }
 
   @override
-  void addAll(Map<K,V> other, {bool save = true}) {
+  void addAll(Map<K, V> other, {bool save = true}) {
     _shouldSave = false;
     _shouldNotify = false;
 
-    for(K key in other.keys){
+    for (K key in other.keys) {
       this[key] = other[key];
     }
 
@@ -747,17 +721,17 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     _notify();
 
     _shouldSave = _defaultShouldSave;
-    if(save){
+    if (save) {
       write();
     }
   }
 
   @override
-  void addEntries(Iterable<MapEntry<K,V>> entries, {bool save = true}) {
+  void addEntries(Iterable<MapEntry<K, V>> entries, {bool save = true}) {
     _shouldSave = false;
     _shouldNotify = false;
 
-    for(MapEntry<K,V> entry in entries){
+    for (MapEntry<K, V> entry in entries) {
       this[entry.key] = entry.value;
     }
 
@@ -765,19 +739,19 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     _notify();
 
     _shouldSave = _defaultShouldSave;
-    if(save){
+    if (save) {
       write();
     }
   }
 
   @override
   void clear({bool save = true}) {
-    for(V val in values){
+    for (V val in values) {
       _removedVal(val);
     }
     _data.clear();
     _notify();
-    if(save){
+    if (save) {
       write();
     }
   }
@@ -785,15 +759,15 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   @override
   V putIfAbsent(K key, V Function() ifAbsent, {bool save = true}) {
     bool called = false;
-    V val = _data.putIfAbsent(key, (){
+    V val = _data.putIfAbsent(key, () {
       called = true;
       V val = ifAbsent();
       _addedVal(val);
       return val;
     });
-    if(called){
+    if (called) {
       _notify();
-      if(save){
+      if (save) {
         write();
       }
     }
@@ -805,36 +779,36 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
     V val = _data.remove(key);
     _removedVal(val);
     _notify();
-    if(save){
+    if (save) {
       write();
     }
     return val;
   }
 
   @override
-  void removeWhere(bool Function(K,V) predicate, {bool save = true}) {
+  void removeWhere(bool Function(K, V) predicate, {bool save = true}) {
     bool removed = false;
     _shouldNotify = false;
-    for(MapEntry<K,V> entry in entries){
-      if(predicate(entry.key, entry.value)){
+    for (MapEntry<K, V> entry in entries) {
+      if (predicate(entry.key, entry.value)) {
         removed = true;
         remove(entry.key, save: false);
       }
     }
     _shouldNotify = true;
-    if(removed){
+    if (removed) {
       _notify();
-      if(save){
+      if (save) {
         write();
       }
     }
-    
   }
 
   @override
-  V update(K key, V Function(V value) update,{V Function() ifAbsent, bool save = true}) {
+  V update(K key, V Function(V value) update,
+      {V Function() ifAbsent, bool save = true}) {
     V data = _data.update(key, update, ifAbsent: ifAbsent);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
@@ -842,32 +816,29 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   }
 
   @override
-  void updateAll(V Function(K,V) update, {bool save = true}) {
+  void updateAll(V Function(K, V) update, {bool save = true}) {
     _data.updateAll(update);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
 
   @override
-  void forEach(void Function(K,V) f,{bool save = true, bool shouldNotify = true}) {
+  void forEach(void Function(K, V) f,
+      {bool save = true, bool shouldNotify = true}) {
     _data.forEach(f);
-    if(save){
+    if (save) {
       write();
     }
-    if(shouldNotify){
+    if (shouldNotify) {
       _notify();
     }
   }
 
-
-
-
-
   @override
   Map<RK, RV> cast<RK, RV>() {
-    return _data.cast<RK,RV>();
+    return _data.cast<RK, RV>();
   }
 
   @override
@@ -896,39 +867,37 @@ mixin MapStorage<W,K,V> on ValueStorage<W,Map<K,V>>  implements Map<K,V>{
   int get length => _data.length;
 
   @override
-  Map<K2, V2> map<K2, V2>(MapEntry<K2,V2> Function(K,V) f) {
+  Map<K2, V2> map<K2, V2>(MapEntry<K2, V2> Function(K, V) f) {
     return _data.map(f);
   }
 
   @override
   Iterable<V> get values => _data.values;
-
 }
 
-
-/// adds some optimizations to the [MapStorage] mixin if the data is stored as a map 
+/// adds some optimizations to the [MapStorage] mixin if the data is stored as a map
 /// that can have values accessed independently using [ExternalMapIO]
-/// 
-/// this allows the user to modify and save specific entries rather than 
+///
+/// this allows the user to modify and save specific entries rather than
 /// saving the whole map when a value is changed
-mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, MapStorage<Map<KW,VW>, KR,VR>{
-
+mixin ExternalMapOptimizations<KW, VW, KR, VR>
+    on ExternalMapIO<KW, VW, KR, VR>, MapStorage<Map<KW, VW>, KR, VR> {
   @override
   void operator []=(KR key, VR value) {
     _removedVal(_data[key]);
     _addedVal(value);
     _data[key] = value;
-    if(_shouldSave){
+    if (_shouldSave) {
       setEntry(key, value);
     }
     _notify();
   }
 
   @override
-  void addAll(Map<KR,VR> other, {bool save = true}) {
+  void addAll(Map<KR, VR> other, {bool save = true}) {
     _shouldSave = save;
     _shouldNotify = false;
-    for(KR key in other.keys){
+    for (KR key in other.keys) {
       this[key] = other[key];
     }
     _shouldNotify = true;
@@ -937,10 +906,10 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
   }
 
   @override
-  void addEntries(Iterable<MapEntry<KR,VR>> entries, {bool save = true}) {
+  void addEntries(Iterable<MapEntry<KR, VR>> entries, {bool save = true}) {
     _shouldSave = save;
     _shouldNotify = false;
-    for(MapEntry<KR,VR> entry in entries){
+    for (MapEntry<KR, VR> entry in entries) {
       this[entry.key] = entry.value;
     }
     _shouldNotify = true;
@@ -957,8 +926,8 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
 
   @override
   void clear({bool save = true}) {
-    for(MapEntry<KR,VR> entry in entries){
-      if(save){
+    for (MapEntry<KR, VR> entry in entries) {
+      if (save) {
         deleteEntry(entry.key);
       }
       _removedVal(entry.value);
@@ -970,15 +939,15 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
   @override
   VR putIfAbsent(KR key, VR Function() ifAbsent, {bool save = true}) {
     bool called = false;
-    VR val = _data.putIfAbsent(key, (){
+    VR val = _data.putIfAbsent(key, () {
       called = true;
       VR val = ifAbsent();
       _addedVal(val);
       return val;
     });
-    if(called){
+    if (called) {
       _notify();
-      if(save){
+      if (save) {
         setEntry(key, val);
       }
     }
@@ -990,47 +959,47 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
     VR val = _data.remove(key);
     _removedVal(val);
     _notify();
-    if(save){
+    if (save) {
       deleteEntry(key);
     }
     return val;
   }
 
   @override
-  void removeWhere(bool Function(KR,VR) predicate, {bool save = true}) {
+  void removeWhere(bool Function(KR, VR) predicate, {bool save = true}) {
     bool removed = false;
     _shouldNotify = false;
-    for(MapEntry<KR,VR> entry in entries){
-      if(predicate(entry.key, entry.value)){
+    for (MapEntry<KR, VR> entry in entries) {
+      if (predicate(entry.key, entry.value)) {
         removed = true;
         remove(entry.key, save: save);
       }
     }
     _shouldNotify = true;
-    if(removed){
+    if (removed) {
       _notify();
     }
-    
   }
 
   @override
-  VR update(KR key, VR Function(VR value) update,{VR Function() ifAbsent, bool save = true, bool lock = false}) {
-    if(lock && save){
+  VR update(KR key, VR Function(VR value) update,
+      {VR Function() ifAbsent, bool save = true, bool lock = false}) {
+    if (lock && save) {
       VR val;
-      lockAndUpdateEntry(key, (value){
-        if(value == null){
+      lockAndUpdateEntry(key, (value) {
+        if (value == null) {
           val = ifAbsent();
-        }else{
+        } else {
           val = update(value);
         }
         return val;
-      }).then((value){
+      }).then((value) {
         _data[key] = value;
       });
       return val;
     }
     VR data = _data.update(key, update, ifAbsent: ifAbsent);
-    if(save){
+    if (save) {
       setEntry(key, data);
     }
     _notify();
@@ -1038,36 +1007,26 @@ mixin ExternalMapOptimizations<KW,VW, KR,VR> on ExternalMapIO<KW,VW, KR,VR>, Map
   }
 
   @override
-  void updateAll(VR Function(KR,VR) update, {bool save = true, bool lock = false}) {
-    if(save && lock){
-      lockAndUpdate((newData){
+  void updateAll(VR Function(KR, VR) update,
+      {bool save = true, bool lock = false}) {
+    if (save && lock) {
+      lockAndUpdate((newData) {
         newData.updateAll(update);
         return newData;
-      }).then((value){
+      }).then((value) {
         _data.addAll(value);
       });
       return;
     }
     _data.updateAll(update);
-    if(save){
+    if (save) {
       write();
     }
     _notify();
   }
 
   /// writes the entry with the given [key]
-  Future<bool> writeEntry(KR key){
+  Future<bool> writeEntry(KR key) {
     return setEntry(key, _data[key]);
   }
-
 }
-
-
-
-
-
-
-
-
-
-
