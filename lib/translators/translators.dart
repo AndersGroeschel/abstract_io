@@ -1,32 +1,8 @@
 import 'dart:convert';
 import 'dart:typed_data' show Uint8List;
 import 'package:abstract_io/abstract_io/abstract_base.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart' show MemoryImage;
 
-/// gives a default value for a translator
-///
-/// if no writable is passed to this for translating then the [defaultValue] is returned
-mixin TranslatorDefaultValue<W, R> on Translator<W, R> {
-  R get defaultValue;
-
-  @override
-  @mustCallSuper
-  R translateWritable(writable) {
-    R val;
-    try {
-      val = super.translateWritable(writable);
-    } catch (e) {
-      val = null;
-    }
-
-    if (val == null) {
-      val = defaultValue;
-    }
-
-    return val;
-  }
-}
 
 /// links two translators together using an in between type [B]
 ///
