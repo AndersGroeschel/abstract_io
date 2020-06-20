@@ -27,6 +27,9 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
     _data = data;
   }
 
+  @override
+  String toString() => _data.toString();
+
   void _notify() {
     if (_shouldNotify) {
       if (this is ListenerSupport) {
@@ -36,6 +39,8 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
       }
     }
   }
+
+  
 
   bool _defaultShouldSave = true;
   bool _shouldNotify = true;
