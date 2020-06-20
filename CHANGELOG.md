@@ -1,3 +1,6 @@
+## [0.1.1+2] - 6/20/2020
+* made sure example app was working and updated its pubspec.yaml to reflect the latest version
+
 ## [0.1.1+1] - 6/20/2020
 * fix to translators so that translateWritable can handle a null value
 * fix to ValueAccess so that setting value works properly now

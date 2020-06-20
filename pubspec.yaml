@@ -1,6 +1,6 @@
 name: abstract_io
 description: Abstract IO is designed to simplify and generalize saving data both localy and externaly
-version: 0.1.1+1
+version: 0.1.1+2
 author: Anders Groeschel
 repository: https://github.com/AndersGroeschel/abstract_io
 homepage: https://github.com/AndersGroeschel/abstract_io
