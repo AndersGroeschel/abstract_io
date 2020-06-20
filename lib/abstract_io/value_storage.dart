@@ -89,7 +89,7 @@ mixin ValueAccess<W, R> on ValueStorage<W, R> {
       (_data as StorageAccess)?.storageReference = null;
       (newVal as StorageAccess).storageReference = this;
     }
-    onDataRecieved(_data);
+    onDataRecieved(newVal);
     _notify();
     if (_shouldSave) {
       write();
