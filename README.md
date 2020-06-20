@@ -3,7 +3,7 @@
 This Package is designed to simplify and generalize saving data. Because Abstract IO
 is meant to generalize saving data both localy and externaly no specific implementation is
 provided in this package. As of the time I'm writting this local file storage and
-storage for firebase has been implemented and will be released soon.
+storage for firebase has been implemented.
 
 The very base of this package is the Abstract_IO object, which takes a Translator and 
 an IOInterface. 
