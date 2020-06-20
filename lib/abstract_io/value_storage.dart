@@ -169,6 +169,10 @@ mixin StorageAccess {
 
   /// saves this using the [ValueStorage] that stores it
   Future<bool> write() => storageReference.write();
+
+  void notifyStorage(){
+    storageReference._notify();
+  }
 }
 
 /// adds the functionality of a list to this [ValueStorage]
