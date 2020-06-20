@@ -24,6 +24,9 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
   @override
   @mustCallSuper
   void onDataRecieved(R data) {
+    if (data == null) {
+      return;
+    }
     _data = data;
   }
 
@@ -39,8 +42,6 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
       }
     }
   }
-
-  
 
   bool _defaultShouldSave = true;
   bool _shouldNotify = true;
@@ -175,7 +176,7 @@ mixin StorageAccess {
   /// saves this using the [ValueStorage] that stores it
   Future<bool> write() => storageReference.write();
 
-  void notifyStorage(){
+  void notifyStorage() {
     storageReference._notify();
   }
 }

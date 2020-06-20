@@ -239,6 +239,8 @@ abstract class IOInterface<W> {
   /// [requestData] must call [onDataRecieved] either directly or indirectly and
   /// if at all possible before the Future returns
   ///
+  /// instead of throwing an error if something doesn't work consider passing null to [onDataRecieved]
+  ///
   /// if not some functionality mixins may not work properly, most at risk is [ValueFetcher]
   Future<void> requestData();
 
