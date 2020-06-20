@@ -185,11 +185,16 @@ abstract class Translator<W, R> {
   W translateReadable(R readable);
 
   /// translates a writable data type into one that is readable
+  ///
+  /// if the writable is null a null value or a default value should be returned
   R translateWritable(W writable);
 
   /// translates between the writable type and the readable type throws an error
   /// if an unsupported type is given
   dynamic translate(dynamic data) {
+    if (data == null) {
+      return null;
+    }
     if (data is R) {
       return translateReadable(data);
     } else if (data is W) {

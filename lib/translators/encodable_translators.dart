@@ -36,6 +36,9 @@ class EncodableStringTranslator<T extends Encodable>
 
   @override
   T translateWritable(String writable) {
+    if (writable == null) {
+      return null;
+    }
     return decoder.decode(json.decode(writable));
   }
 }
@@ -62,6 +65,9 @@ class EncodableMapListTranslator<T extends Encodable>
 
   @override
   List<T> translateWritable(List<Map<String, dynamic>> writable) {
+    if (writable == null) {
+      return null;
+    }
     List<T> vals = [];
     for (Map<String, dynamic> val in writable) {
       vals.add(decoder.decode(val));
@@ -84,6 +90,9 @@ class EncodableMapTranslator<T extends Encodable>
 
   @override
   T translateWritable(Map<String, dynamic> writable) {
+    if (writable == null) {
+      return null;
+    }
     return decoder.decode(writable);
   }
 }

@@ -3,7 +3,6 @@ import 'dart:typed_data' show Uint8List;
 import 'package:abstract_io/abstract_io/abstract_base.dart';
 import 'package:flutter/rendering.dart' show MemoryImage;
 
-
 /// links two translators together using an in between type [B]
 ///
 /// essentially takes two translators and feeds them into each other to get
@@ -24,6 +23,9 @@ class TranslatorLink<W, B, R> extends Translator<W, R> {
 
   @override
   R translateWritable(W writable) {
+    if (writable == null) {
+      return null;
+    }
     return readingEnd.translateWritable(writingEnd.translateWritable(writable));
   }
 }
@@ -49,6 +51,9 @@ class TranslatorMap<KW, VW, KR, VR>
 
   @override
   Map<KR, VR> translateWritable(Map<KW, VW> writable) {
+    if (writable == null) {
+      return null;
+    }
     return writable.map<KR, VR>((KW key, VW value) {
       return MapEntry(keyTranslator.translateWritable(key),
           valueTranslator.translateWritable(value));
@@ -67,6 +72,9 @@ class SameTypeTranslator<T> extends Translator<T, T> {
 
   @override
   T translateWritable(T writable) {
+    if (writable == null) {
+      return null;
+    }
     return writable;
   }
 
@@ -87,6 +95,9 @@ class JSONStringTranslator extends Translator<String, dynamic> {
 
   @override
   translateWritable(String writable) {
+    if (writable == null) {
+      return null;
+    }
     return json.decode(writable);
   }
 }
@@ -116,7 +127,10 @@ class ImageByteTranslator extends Translator<Uint8List, MemoryImage> {
   }
 
   @override
-  MemoryImage translateWritable(Uint8List writeable) {
-    return MemoryImage(writeable, scale: _scale);
+  MemoryImage translateWritable(Uint8List writable) {
+    if (writable == null) {
+      return null;
+    }
+    return MemoryImage(writable, scale: _scale);
   }
 }
