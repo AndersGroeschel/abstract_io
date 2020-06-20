@@ -1,3 +1,7 @@
+## [0.1.1+1] - 6/20/2020
+* fix to translators so that translateWritable can handle a null value
+* fix to ValueAccess so that setting value works properly now
+
 ## [0.1.1] - 6/20/2020
 * added example app
 * lots of little tweaks for formating and dart doc
