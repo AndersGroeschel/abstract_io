@@ -1,3 +1,6 @@
+## [0.1.2] - 7/30/2020
+* seperated the map functionality from locking
+
 ## [0.1.1+2] - 6/20/2020
 * made sure example app was working and updated its pubspec.yaml to reflect the latest version
 
