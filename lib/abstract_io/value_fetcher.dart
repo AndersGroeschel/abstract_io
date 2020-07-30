@@ -2,14 +2,10 @@ import 'package:abstract_io/abstract_io.dart';
 
 /// a mixin on [AbstractIO] to allow this to easily read and write values without any
 /// purposeful storage of a value
-class ValueFetcher<W, R> extends AbstractIO<W, R> {
+mixin ValueFetcher<W, R> on AbstractIO<W, R> {
   /// temporary value so that data from [onDataRecieved] can be transferred easily
   R _tempVal;
 
-  ValueFetcher(
-    IOInterface<W> ioInterface,
-    Translator<W,R> translator,
-  ) : super(ioInterface, translator: translator);
 
   /// write [data] using the [ioInterface] given to this
   Future<bool> write(R data) {

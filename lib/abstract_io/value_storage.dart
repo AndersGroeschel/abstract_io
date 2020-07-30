@@ -7,16 +7,10 @@ import 'package:flutter/foundation.dart';
 /// by itself this mixin isn't that powerful but it sets the stage for more useful
 /// functionality with [ListStorage] and [MapStorage] to allow for iterable forms of
 /// storage or [ValueAccess] for direct access to the value
-class ValueStorage<W, R> extends AbstractIO<W, R> {
+mixin ValueStorage<W, R> on AbstractIO<W, R> {
   /// the stored data that was loaded
   R _data;
 
-  ValueStorage(
-    IOInterface<W> ioInterface,
-    {
-      Translator<W,R> translator
-    }
-  ) : super(ioInterface, translator: translator);
 
   /// writes [_data] using the [sendData] function
   Future<bool> write() async {
