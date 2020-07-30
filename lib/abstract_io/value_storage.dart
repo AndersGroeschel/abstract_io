@@ -1,5 +1,6 @@
 import 'dart:math' show Random;
 import 'package:abstract_io/abstract_io.dart';
+import 'package:abstract_io/abstract_io/locking.dart';
 import 'package:flutter/foundation.dart';
 
 /// a mixin on [AbstractIO] that stores the loaded value for you
@@ -883,12 +884,12 @@ mixin MapStorage<W, K, V> on ValueStorage<W, Map<K, V>> implements Map<K, V> {
 }
 
 /// adds some optimizations to the [MapStorage] mixin if the data is stored as a map
-/// that can have values accessed independently using [ExternalMapIO]
+/// that can have values accessed independently using [MapIO]
 ///
 /// this allows the user to modify and save specific entries rather than
 /// saving the whole map when a value is changed
-mixin ExternalMapOptimizations<KW, VW, KR, VR>
-    on ExternalMapIO<KW, VW, KR, VR>, MapStorage<Map<KW, VW>, KR, VR> {
+mixin MapOptimizations<KW, VW, KR, VR>
+    on MapIO<KW, VW, KR, VR>, MapStorage<Map<KW, VW>, KR, VR> {
 
   @override
   void operator []=(KR key, VR value) {
@@ -996,6 +997,22 @@ mixin ExternalMapOptimizations<KW, VW, KR, VR>
     }
   }
 
+  /// writes the entry with the given [key]
+  Future<bool> writeEntry(KR key) {
+    return setEntry(key, _data[key]);
+  }
+
+  Future<void> loadEntry(KR key) async{
+    _shouldSave = false;
+    this[key] = await getEntry(key);
+    _reset();
+  }
+
+}
+
+
+mixin MapStorageEntryLock<KW, VW, KR, VR> on EntryLockableMapIO<KW, VW, KR, VR>, MapStorage< Map<KW,VW>, KR, VR>{
+
   @override
   VR update(KR key, VR Function(VR value) update,
       {VR Function() ifAbsent, bool save, bool lock = false}) {
@@ -1022,6 +1039,10 @@ mixin ExternalMapOptimizations<KW, VW, KR, VR>
     return data;
   }
 
+}
+
+mixin MapStorageLock<KW, VW, KR, VR> on LockableMapIO<KW, VW, KR, VR>, MapStorage< Map<KW,VW>, KR, VR>{
+
   @override
   void updateAll(VR Function(KR, VR) update, {bool save, bool lock = false}) {
     if ((save ?? _shouldSave) && lock) {
@@ -1041,16 +1062,9 @@ mixin ExternalMapOptimizations<KW, VW, KR, VR>
     }
   }
 
-  /// writes the entry with the given [key]
-  Future<bool> writeEntry(KR key) {
-    return setEntry(key, _data[key]);
-  }
-
-  Future<void> loadEntry(KR key) async{
-    _shouldSave = false;
-    this[key] = await getEntry(key);
-    _reset();
-  }
-
-
 }
+
+
+
+
+

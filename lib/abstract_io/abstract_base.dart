@@ -66,54 +66,31 @@ abstract class AbstractIO<W, R> {
   }
 }
 
-/// [ExternalIO] is an extension of [AbstractIO] to provide the function
-/// of [lockAndUpdate] so that data can be locked and then updated, this
-/// class requires that the [ioInterface] is an [ExternalIOInterface]
-///
-/// [lockAndUpdate] is much needed functionality when working with data that is
-/// stored off device and modified by multiple devices because without it is possible
-/// a data race could occur
-///
-/// for more information about writing and reading data visit the parent class [AbstractIO]
-abstract class ExternalIO<W, R> extends AbstractIO<W, R> {
-  ExternalIO(
-    ExternalIOInterface<W> ioInterface, {
-    Translator<W, R> translator,
-  }) : super(ioInterface, translator: translator);
-
-  /// [lockAndUpdate] will lock the server side data and allow you to update it with
-  /// the [update] function
-  ///
-  /// the functionality of this is handled by the [ioInterface] which must be an [ExternalIOInterface]
-  Future<R> lockAndUpdate(R Function(R newData) update) {
-    return (ioInterface as ExternalIOInterface)
-        .lockAndUpdate<R>(update, translator: translator);
-  }
-}
-
-/// [ExternalMapIO] is meant to be the [AbstractIO] for when the data on the server side
+/// [MapIO] is meant to be the [AbstractIO] for when the data on the server side
 /// is stored in some form of a map
 ///
 /// it provides additional functionality to access and modify specific entries
 ///
-/// [ExternalMapIO] is best used with [MapStorage] and [ExternalMapOptimizations]
+/// [MapIO] is best used with [MapStorage] and [MapOptimizations]
 /// to take full advantage of seperate entry storage
-abstract class ExternalMapIO<KW, VW, KR, VR>
-    extends ExternalIO<Map<KW, VW>, Map<KR, VR>> {
+abstract class MapIO<KW, VW, KR, VR>
+    extends AbstractIO<Map<KW, VW>, Map<KR, VR>> {
   /// the translator for the key from the key writable (KW) and the key readable (KR)
   Translator<KW, KR> keyTranslator;
 
   /// the translator for the value from the value writable (VW) and the value readable (VR)
   Translator<VW, VR> valueTranslator;
 
-  ExternalMapIO(ExternalMapIOInterface<KW, VW> ioInterface,
-      {this.keyTranslator, this.valueTranslator})
-      : super(
-          ioInterface,
-          translator: TranslatorMap(
-              keyTranslator ?? _CastingTranslator<KW, KR>(),
-              valueTranslator ?? _CastingTranslator<VW, VR>()),
-        ) {
+  MapIO(
+    MapIOInterface<KW, VW> ioInterface,
+    {this.keyTranslator, this.valueTranslator}
+  )
+    : super(
+        ioInterface,
+        translator: TranslatorMap(
+            keyTranslator ?? _CastingTranslator<KW, KR>(),
+            valueTranslator ?? _CastingTranslator<VW, VR>()),
+      ) {
     keyTranslator ??= _CastingTranslator<KW, KR>();
     valueTranslator ??= _CastingTranslator<VW, VR>();
   }
@@ -125,23 +102,14 @@ abstract class ExternalMapIO<KW, VW, KR, VR>
   /// the core functionality is handled by the [ioInterface]
   Future<KR> addEntry(VR value) async {
     return keyTranslator.translateWritable(
-        await (ioInterface as ExternalMapIOInterface)
+        await (ioInterface as MapIOInterface)
             .addEntry(valueTranslator.translateReadable(value)));
-  }
-
-  /// locks the entry with the given [key] and updates it using the [update] function
-  ///
-  /// returns the updated value in a future
-  Future<VR> lockAndUpdateEntry(KR key, VR Function(VR newData) update) {
-    return (ioInterface as ExternalMapIOInterface).lockAndUpdateEntry<VR>(
-        keyTranslator.translateReadable(key), update,
-        valueTranslator: valueTranslator);
   }
 
   /// returns the value of the entry with the given [key] in a future
   Future<VR> getEntry(KR key) async {
     return valueTranslator.translateWritable(
-        await (ioInterface as ExternalMapIOInterface)
+        await (ioInterface as MapIOInterface)
             .getEntry(keyTranslator.translateReadable(key)));
   }
 
@@ -150,7 +118,7 @@ abstract class ExternalMapIO<KW, VW, KR, VR>
   /// returns whether or not the deletion was successful,
   /// a value of false does not necessarily mean the data was not deleted
   Future<bool> deleteEntry(KR key) {
-    return (ioInterface as ExternalMapIOInterface)
+    return (ioInterface as MapIOInterface)
         .deleteEntry(keyTranslator.translateReadable(key));
   }
 
@@ -159,7 +127,7 @@ abstract class ExternalMapIO<KW, VW, KR, VR>
   ///
   /// if the entry with [key] does not previously exist then it is created
   Future<bool> setEntry(KR key, VR value) {
-    return (ioInterface as ExternalMapIOInterface).setEntry(
+    return (ioInterface as MapIOInterface).setEntry(
         keyTranslator.translateReadable(key),
         valueTranslator.translateReadable(value));
   }
@@ -256,51 +224,15 @@ abstract class IOInterface<W> {
   Future<bool> deleteData();
 }
 
-/// allows you to send data request data and recieve data all of type W
-///
-/// it is best practice that W should be the type that the data is sent as
-/// such as a String or a list of bytes for files
-///
-/// [ExternalIOInterface] adds the functionality to [lockAndUpdate] data,
-/// this is often nessecary functionality when storing data off device to avoid race conditions
-abstract class ExternalIOInterface<W> extends IOInterface<W> {
-  ExternalIOInterface();
-
-  /// locks the data where it is being stored and updates it
-  ///
-  /// the protocol [lockAndUpdate] should follow is
-  ///
-  /// 1) lock the data
-  ///
-  /// 2) request new data
-  ///
-  /// 3) translate data of type W into type R using the [translator]
-  ///
-  /// 4) [update] the data
-  ///
-  /// 5) translate the update data of type R back into type W
-  ///
-  /// 6) write the data and unlock
-  Future<R> lockAndUpdate<R>(R Function(R newData) update,
-      {Translator<W, R> translator});
-}
 
 /// allows you to send data request data and recieve data all of type W
 ///
 /// it is best practice that W should be the type that the data is sent as
 /// such as a String or a list of bytes for files
 ///
-/// [ExternalIOInterface] adds the functionality to [lockAndUpdate] data,
-/// this is often nessecary functionality when storing data off device to avoid race conditions
-///
-/// [ExternalMapIOInterface] adds additional functionality for when the data is stored in the form of a map
-abstract class ExternalMapIOInterface<KW, VW>
-    extends ExternalIOInterface<Map<KW, VW>> {
-  /// lock and update a specific entry with the given [key]
-  ///
-  /// should follow the same general protocol as [lockAndUpdate]
-  Future<V> lockAndUpdateEntry<V>(KW key, V Function(V newData) update,
-      {Translator<VW, V> valueTranslator});
+/// [MapIOInterface] adds additional functionality for when the data is stored in the form of a map
+abstract class MapIOInterface<KW, VW>
+    extends IOInterface<Map<KW, VW>> {
 
   /// get theentry for the [key] returns the value in a future
   Future<VW> getEntry(KW key);
@@ -321,3 +253,4 @@ abstract class ExternalMapIOInterface<KW, VW>
   /// create a new entry with the given [value] and return its associated key
   Future<KW> addEntry(VW value);
 }
+
