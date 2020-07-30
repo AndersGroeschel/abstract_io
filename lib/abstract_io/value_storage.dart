@@ -889,6 +889,7 @@ mixin MapStorage<W, K, V> on ValueStorage<W, Map<K, V>> implements Map<K, V> {
 /// saving the whole map when a value is changed
 mixin ExternalMapOptimizations<KW, VW, KR, VR>
     on ExternalMapIO<KW, VW, KR, VR>, MapStorage<Map<KW, VW>, KR, VR> {
+
   @override
   void operator []=(KR key, VR value) {
     _removedVal(_data[key]);
@@ -1044,4 +1045,12 @@ mixin ExternalMapOptimizations<KW, VW, KR, VR>
   Future<bool> writeEntry(KR key) {
     return setEntry(key, _data[key]);
   }
+
+  Future<void> loadEntry(KR key) async{
+    _shouldSave = false;
+    this[key] = await getEntry(key);
+    _reset();
+  }
+
+
 }
