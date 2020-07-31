@@ -1,3 +1,6 @@
+## [0.1.2+1] - 7/30/2020
+* added on entry recieved for maps for better async loading
+
 ## [0.1.2] - 7/30/2020
 * seperated the map functionality from locking
 
