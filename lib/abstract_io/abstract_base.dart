@@ -95,6 +95,21 @@ abstract class MapIO<KW, VW, KR, VR>
     valueTranslator ??= _CastingTranslator<VW, VR>();
   }
 
+
+  @override
+  @mustCallSuper
+  void initialize() {
+    (ioInterface as MapIOInterface<KW, VW>).onEntryRecieved = (KW key, VW value){
+      onEntryRecieved(
+        keyTranslator.translateWritable(key), 
+        valueTranslator.translateWritable(value)
+      );
+    };
+    super.initialize();
+  }
+
+  void onEntryRecieved(KR key, VR value);
+
   /// creates a new entry with the given [value] the associated key is returned
   ///
   /// if you want to create a new entry with a specific key [setEntry] should be used instead
@@ -234,6 +249,8 @@ abstract class IOInterface<W> {
 abstract class MapIOInterface<KW, VW>
     extends IOInterface<Map<KW, VW>> {
 
+  void Function(KW key , VW value ) onEntryRecieved;
+
   /// get theentry for the [key] returns the value in a future
   Future<VW> getEntry(KW key);
 
@@ -252,5 +269,7 @@ abstract class MapIOInterface<KW, VW>
 
   /// create a new entry with the given [value] and return its associated key
   Future<KW> addEntry(VW value);
+
+  
 }
 

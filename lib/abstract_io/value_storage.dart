@@ -1008,6 +1008,13 @@ mixin MapOptimizations<KW, VW, KR, VR>
     _reset();
   }
 
+  @override
+  void onEntryRecieved(key, value) async {
+    _shouldSave = false;
+    this[key] = value;
+    _reset();
+  }
+
 }
 
 
