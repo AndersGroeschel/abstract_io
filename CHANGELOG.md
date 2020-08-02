@@ -1,3 +1,7 @@
+## [0.1.2+2] - 8/2/2020
+* improved some of the map functionality
+* made MapIO functionality reflect the functionality of AbstractIO better
+
 ## [0.1.2+1] - 7/30/2020
 * added on entry recieved for maps for better async loading
 
