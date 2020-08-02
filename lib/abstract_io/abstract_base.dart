@@ -43,7 +43,7 @@ abstract class AbstractIO<W, R> {
   /// the core functionality of this function is implemented in ioInterface
   @protected
   Future<bool> sendData(R data) {
-    return ioInterface.sendData(translator.translateReadable(data));
+    return ioInterface.setData(translator.translateReadable(data));
   }
 
   /// called when data is recieved by the [ioInterface]
@@ -117,15 +117,8 @@ abstract class MapIO<KW, VW, KR, VR>
   /// the core functionality is handled by the [ioInterface]
   Future<KR> addEntry(VR value) async {
     return keyTranslator.translateWritable(
-        await (ioInterface as MapIOInterface)
+        await (ioInterface as MapIOInterface<KW, VW>)
             .addEntry(valueTranslator.translateReadable(value)));
-  }
-
-  /// returns the value of the entry with the given [key] in a future
-  Future<VR> getEntry(KR key) async {
-    return valueTranslator.translateWritable(
-        await (ioInterface as MapIOInterface)
-            .getEntry(keyTranslator.translateReadable(key)));
   }
 
   /// delets the entry with the given [key]
@@ -133,7 +126,7 @@ abstract class MapIO<KW, VW, KR, VR>
   /// returns whether or not the deletion was successful,
   /// a value of false does not necessarily mean the data was not deleted
   Future<bool> deleteEntry(KR key) {
-    return (ioInterface as MapIOInterface)
+    return (ioInterface as MapIOInterface<KW, VW>)
         .deleteEntry(keyTranslator.translateReadable(key));
   }
 
@@ -142,10 +135,12 @@ abstract class MapIO<KW, VW, KR, VR>
   ///
   /// if the entry with [key] does not previously exist then it is created
   Future<bool> setEntry(KR key, VR value) {
-    return (ioInterface as MapIOInterface).setEntry(
+    return (ioInterface as MapIOInterface<KW, VW>).setEntry(
         keyTranslator.translateReadable(key),
         valueTranslator.translateReadable(value));
   }
+
+  
 }
 
 /// takes two data types a readable R and a writable (W) and translates between
@@ -213,9 +208,9 @@ class _CastingTranslator<W, R> extends Translator<W, R> {
 /// this does need to be specific to files, it could be used to interface with servers
 /// or anything else nessasary
 abstract class IOInterface<W> {
-  /// sends the data to wherever it is being stored and returns whether or not
+  /// sets the data in the storage place to the given data and returns whether or not
   /// it was successful
-  Future<bool> sendData(W data);
+  Future<bool> setData(W data);
 
   /// this funtion is called whenever this receives some data
   ///
@@ -249,10 +244,12 @@ abstract class IOInterface<W> {
 abstract class MapIOInterface<KW, VW>
     extends IOInterface<Map<KW, VW>> {
 
+
+  /// this funtion is called whenever this receives a specific data entry
+  ///
+  /// DO NOT set it to a value or overide it that is handled by a [MapIO] object
   void Function(KW key , VW value ) onEntryRecieved;
 
-  /// get theentry for the [key] returns the value in a future
-  Future<VW> getEntry(KW key);
 
   /// delete the entry for the [key]
   ///
@@ -270,6 +267,7 @@ abstract class MapIOInterface<KW, VW>
   /// create a new entry with the given [value] and return its associated key
   Future<KW> addEntry(VW value);
 
-  
+  Future<void> requestEntry(KW key);
+
 }
 

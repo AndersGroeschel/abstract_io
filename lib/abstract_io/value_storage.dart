@@ -997,23 +997,34 @@ mixin MapOptimizations<KW, VW, KR, VR>
     }
   }
 
+  @override
+  VR update(KR key, VR Function(VR value) update,{VR Function() ifAbsent, bool save}) {
+    VR data = _data.update(key, update, ifAbsent: ifAbsent);
+    if (save ?? _shouldSave) {
+      setEntry(key, data);
+    }
+    _notify();
+    return data;
+  }
+
   /// writes the entry with the given [key]
   Future<bool> writeEntry(KR key) {
     return setEntry(key, _data[key]);
   }
 
   Future<void> loadEntry(KR key) async{
-    _shouldSave = false;
-    this[key] = await getEntry(key);
-    _reset();
+    await (ioInterface as MapIOInterface).requestEntry(key);
   }
 
   @override
   void onEntryRecieved(key, value) async {
-    _shouldSave = false;
-    this[key] = value;
-    _reset();
+    _removedVal(_data[key]);
+    _addedVal(value);
+    _data[key] = value;
+    _notify();
   }
+
+  
 
 }
 

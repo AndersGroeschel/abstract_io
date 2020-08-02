@@ -59,3 +59,14 @@ mixin DefaultValue<W, R> on AbstractIO<W, R> {
     super.onDataRecieved(data ?? defaultValue);
   }
 }
+
+mixin DefaultEntry<KW,VW, KR,VR> on MapIO<KW,VW, KR,VR>{
+  VR get defaultValue;
+  
+  @override
+  void onEntryRecieved(key, value) {
+    super.onEntryRecieved(key, value?? defaultValue);
+  }
+
+}
+
