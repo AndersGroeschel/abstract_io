@@ -134,3 +134,19 @@ class ImageByteTranslator extends Translator<Uint8List, MemoryImage> {
     return MemoryImage(writable, scale: _scale);
   }
 }
+
+/// default used if no translator is provided all it does is cast the value to
+/// the other data type (this is generally not recomended)
+class CastingTranslator<W, R> extends Translator<W, R> {
+  const CastingTranslator();
+
+  @override
+  W translateReadable(R readable) {
+    return readable as W;
+  }
+
+  @override
+  R translateWritable(W writable) {
+    return writable as R;
+  }
+}
