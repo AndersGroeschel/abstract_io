@@ -1012,7 +1012,7 @@ mixin MapOptimizations<KW, VW, KR, VR>
   }
 
   Future<void> loadEntry(KR key) async{
-    await (ioInterface as MapIOInterface).requestEntry(key);
+    await ioInterface.requestEntry(keyTranslator.translateReadable(key));
   }
 
   @override

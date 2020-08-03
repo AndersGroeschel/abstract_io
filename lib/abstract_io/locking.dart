@@ -37,9 +37,9 @@ mixin LockMap<KW, VW> on MapIOInterface<KW,VW> implements Lock<Map<KW,VW>>, Lock
 
 
 abstract class LockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR> implements EntryLockableMapIO<KW, VW, KR, VR>, LockableIO<Map<KW,VW>, Map<KR,VR>>{
-  
+  final LockMap<KW, VW> ioInterface;
   LockableMapIO(
-    LockMap<KW, VW> ioInterface,
+    this.ioInterface,
     {
       Translator<KW, KR> keyTranslator,
       Translator<VW, VR> valueTranslator
@@ -54,7 +54,7 @@ abstract class LockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR> implem
   ///
   /// returns the updated value in a future
   Future<VR> lockAndUpdateEntry(KR key, VR Function(VR newData) update) {
-    return (ioInterface as LockMap).lockAndUpdateEntry<VR>(
+    return ioInterface.lockAndUpdateEntry<VR>(
         keyTranslator.translateReadable(key), update,
         valueTranslator: valueTranslator);
   }
@@ -64,17 +64,16 @@ abstract class LockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR> implem
   ///
   /// the functionality of this is handled by the [ioInterface] which must be an [LockableIOInterface]
   Future<Map<KR,VR>> lockAndUpdate(Map<KR,VR> Function(Map<KR,VR> newData) update) {
-    return (ioInterface as LockMap)
-        .lockAndUpdate<Map<KR,VR>>(update, translator: translator);
+    return ioInterface.lockAndUpdate<Map<KR,VR>>(update, translator: translator);
   }
 
 }
 
 
 abstract class EntryLockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR>{
-
+  final LockEntry<KW, VW> ioInterface;
   EntryLockableMapIO(
-    LockEntry<KW, VW> ioInterface,
+    this.ioInterface,
     {
       Translator<KW, KR> keyTranslator,
       Translator<VW, VR> valueTranslator
@@ -89,7 +88,7 @@ abstract class EntryLockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR>{
   ///
   /// returns the updated value in a future
   Future<VR> lockAndUpdateEntry(KR key, VR Function(VR newData) update) {
-    return (ioInterface as LockEntry).lockAndUpdateEntry<VR>(
+    return ioInterface.lockAndUpdateEntry<VR>(
         keyTranslator.translateReadable(key), update,
         valueTranslator: valueTranslator);
   }
@@ -108,8 +107,9 @@ abstract class EntryLockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR>{
 ///
 /// for more information about writing and reading data visit the parent class [AbstractIO]
 abstract class LockableIO<W, R> extends AbstractIO<W, R> {
+  final Lock<W> ioInterface;
   LockableIO(
-    Lock<W> ioInterface, {
+    this.ioInterface, {
     Translator<W, R> translator,
   }) : super(ioInterface, translator: translator);
 
@@ -118,8 +118,7 @@ abstract class LockableIO<W, R> extends AbstractIO<W, R> {
   ///
   /// the functionality of this is handled by the [ioInterface] which must be an [LockableIOInterface]
   Future<R> lockAndUpdate(R Function(R newData) update) {
-    return (ioInterface as Lock)
-        .lockAndUpdate<R>(update, translator: translator);
+    return ioInterface.lockAndUpdate<R>(update, translator: translator);
   }
 }
 
