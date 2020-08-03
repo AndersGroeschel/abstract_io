@@ -1,3 +1,7 @@
+## [0.1.2+4] - 8/3/2020
+* made mistake with map optimizations that cause an error (now fixed)
+* removed some unnessacary casts
+
 ## [0.1.2+3] - 8/3/2020
 * moved MapIO functionality into seperate file
 * added missing exports in abstract_io
