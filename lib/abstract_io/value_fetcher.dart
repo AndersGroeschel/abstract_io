@@ -9,7 +9,7 @@ mixin ValueFetcher<W, R> on AbstractIO<W, R> {
 
   /// write [data] using the [ioInterface] given to this
   Future<bool> write(R data) {
-    return sendData(data);
+    return setData(data);
   }
 
   /// read the value that was saved using the [ioInterface] given to this
@@ -38,3 +38,21 @@ mixin FetcherAccess {
   /// writes this using the [ValueFetcher] that retrieved it
   Future<bool> write() => _io.write(this);
 }
+
+
+mixin EntryFetcher<KW, VW, KR, VR> on MapIO<KW, VW, KR, VR>{
+
+  VR _recievedValue;
+
+  Future<VR> readEntry(KR key) async {
+    await ioInterface.requestEntry(keyTranslator.translateReadable(key));
+    return _recievedValue;
+  }
+
+  @override
+  void onEntryRecieved(key, value) {
+    _recievedValue = value;
+  }
+
+}
+
