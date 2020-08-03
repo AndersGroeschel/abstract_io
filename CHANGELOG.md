@@ -1,3 +1,6 @@
+## [0.1.2+6] - 8/3/2020
+* now it works for sure
+
 ## [0.1.2+5] - 8/3/2020
 * made some iteration mistakes that caused errors next time I'll need to make proper tests
 
