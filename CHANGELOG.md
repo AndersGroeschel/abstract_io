@@ -1,3 +1,8 @@
+## [0.1.2+3] - 8/3/2020
+* moved MapIO functionality into seperate file
+* added missing exports in abstract_io
+* added flag to MapIOInterface to allow it to asyncly load individual entries rather than the whole map at once
+
 ## [0.1.2+2] - 8/2/2020
 * improved some of the map functionality
 * made MapIO functionality reflect the functionality of AbstractIO better
