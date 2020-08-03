@@ -1,6 +1,5 @@
 import 'dart:math' show Random;
 import 'package:abstract_io/abstract_io.dart';
-import 'package:abstract_io/abstract_io/locking.dart';
 import 'package:flutter/foundation.dart';
 
 /// a mixin on [AbstractIO] that stores the loaded value for you
@@ -13,9 +12,9 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
   R _data;
 
 
-  /// writes [_data] using the [sendData] function
+  /// writes [_data] using the [setData] function
   Future<bool> write() async {
-    return sendData(_data);
+    return setData(_data);
   }
 
   /// loads the value into [_data] using the [ioInterface]'s requestData function

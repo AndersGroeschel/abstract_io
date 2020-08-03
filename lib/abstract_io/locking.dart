@@ -1,5 +1,4 @@
-
-import 'abstract_base.dart';
+import 'package:abstract_io/abstract_io.dart';
 
 /// adds the functionality to [lockAndUpdate] data,
 /// this is often nessecary functionality when storing data off device to avoid race conditions
