@@ -1,3 +1,6 @@
+## [0.1.2+5] - 8/3/2020
+* made some iteration mistakes that caused errors next time I'll need to make proper tests
+
 ## [0.1.2+4] - 8/3/2020
 * made mistake with map optimizations that cause an error (now fixed)
 * removed some unnessacary casts

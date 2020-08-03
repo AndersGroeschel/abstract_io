@@ -792,11 +792,10 @@ mixin MapStorage<W, K, V> on ValueStorage<W, Map<K, V>> implements Map<K, V> {
   void removeWhere(bool Function(K, V) predicate, {bool save}) {
     bool removed = false;
     _shouldNotify = false;
-    for (MapEntry<K, V> entry in entries) {
-      if (predicate(entry.key, entry.value)) {
-        removed = true;
-        remove(entry.key, save: false);
-      }
+    List<MapEntry<K,V>> toBeRemoved = _data.entries.where((element) => predicate(element.key, element.value));
+    for(MapEntry<K,V> entry in toBeRemoved){
+      removed = true;
+      remove(entry.key, save: false);
     }
     _reset();
     if (removed) {
@@ -984,11 +983,10 @@ mixin MapOptimizations<KW, VW, KR, VR>
     bool removed = false;
     bool s = save ?? _shouldSave;
     _shouldNotify = false;
-    for (MapEntry<KR, VR> entry in entries) {
-      if (predicate(entry.key, entry.value)) {
-        removed = true;
-        remove(entry.key, save: s);
-      }
+    List<MapEntry<KR,VR>> toBeRemoved = _data.entries.where((element) => predicate(element.key, element.value));
+    for(MapEntry<KR,VR> entry in toBeRemoved){
+      removed = true;
+      remove(entry.key, save: s);
     }
     _resetNotify();
     if (removed) {
