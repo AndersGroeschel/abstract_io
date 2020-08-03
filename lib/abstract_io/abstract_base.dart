@@ -33,7 +33,7 @@ abstract class AbstractIO<W, R> {
   AbstractIO(
     this.ioInterface, {
     Translator<W, R> translator,
-  }) : this.translator = translator ?? _CastingTranslator<W, R>() {
+  }) : this.translator = translator?? CastingTranslator<W, R>() {
     initialize();
   }
 
@@ -42,7 +42,7 @@ abstract class AbstractIO<W, R> {
   ///
   /// the core functionality of this function is implemented in ioInterface
   @protected
-  Future<bool> sendData(R data) {
+  Future<bool> setData(R data) {
     return ioInterface.setData(translator.translateReadable(data));
   }
 
@@ -66,82 +66,6 @@ abstract class AbstractIO<W, R> {
   }
 }
 
-/// [MapIO] is meant to be the [AbstractIO] for when the data on the server side
-/// is stored in some form of a map
-///
-/// it provides additional functionality to access and modify specific entries
-///
-/// [MapIO] is best used with [MapStorage] and [MapOptimizations]
-/// to take full advantage of seperate entry storage
-abstract class MapIO<KW, VW, KR, VR>
-    extends AbstractIO<Map<KW, VW>, Map<KR, VR>> {
-  /// the translator for the key from the key writable (KW) and the key readable (KR)
-  Translator<KW, KR> keyTranslator;
-
-  /// the translator for the value from the value writable (VW) and the value readable (VR)
-  Translator<VW, VR> valueTranslator;
-
-  MapIO(
-    MapIOInterface<KW, VW> ioInterface,
-    {this.keyTranslator, this.valueTranslator}
-  )
-    : super(
-        ioInterface,
-        translator: TranslatorMap(
-            keyTranslator ?? _CastingTranslator<KW, KR>(),
-            valueTranslator ?? _CastingTranslator<VW, VR>()),
-      ) {
-    keyTranslator ??= _CastingTranslator<KW, KR>();
-    valueTranslator ??= _CastingTranslator<VW, VR>();
-  }
-
-
-  @override
-  @mustCallSuper
-  void initialize() {
-    (ioInterface as MapIOInterface<KW, VW>).onEntryRecieved = (KW key, VW value){
-      onEntryRecieved(
-        keyTranslator.translateWritable(key), 
-        valueTranslator.translateWritable(value)
-      );
-    };
-    super.initialize();
-  }
-
-  void onEntryRecieved(KR key, VR value);
-
-  /// creates a new entry with the given [value] the associated key is returned
-  ///
-  /// if you want to create a new entry with a specific key [setEntry] should be used instead
-  ///
-  /// the core functionality is handled by the [ioInterface]
-  Future<KR> addEntry(VR value) async {
-    return keyTranslator.translateWritable(
-        await (ioInterface as MapIOInterface<KW, VW>)
-            .addEntry(valueTranslator.translateReadable(value)));
-  }
-
-  /// delets the entry with the given [key]
-  ///
-  /// returns whether or not the deletion was successful,
-  /// a value of false does not necessarily mean the data was not deleted
-  Future<bool> deleteEntry(KR key) {
-    return (ioInterface as MapIOInterface<KW, VW>)
-        .deleteEntry(keyTranslator.translateReadable(key));
-  }
-
-  /// sets the entry with the given [key] to the given [value] and
-  /// returns whether or not the setting was successful
-  ///
-  /// if the entry with [key] does not previously exist then it is created
-  Future<bool> setEntry(KR key, VR value) {
-    return (ioInterface as MapIOInterface<KW, VW>).setEntry(
-        keyTranslator.translateReadable(key),
-        valueTranslator.translateReadable(value));
-  }
-
-  
-}
 
 /// takes two data types a readable R and a writable (W) and translates between
 ///
@@ -184,21 +108,6 @@ abstract class Translator<W, R> {
   }
 }
 
-/// default used if no translator is provided all it does is cast the value to
-/// the other data type (this is generally not recomended)
-class _CastingTranslator<W, R> extends Translator<W, R> {
-  const _CastingTranslator();
-
-  @override
-  W translateReadable(R readable) {
-    return readable as W;
-  }
-
-  @override
-  R translateWritable(W writable) {
-    return writable as R;
-  }
-}
 
 /// allows you to send data request data and recieve data all of type W
 ///
@@ -234,40 +143,4 @@ abstract class IOInterface<W> {
   Future<bool> deleteData();
 }
 
-
-/// allows you to send data request data and recieve data all of type W
-///
-/// it is best practice that W should be the type that the data is sent as
-/// such as a String or a list of bytes for files
-///
-/// [MapIOInterface] adds additional functionality for when the data is stored in the form of a map
-abstract class MapIOInterface<KW, VW>
-    extends IOInterface<Map<KW, VW>> {
-
-
-  /// this funtion is called whenever this receives a specific data entry
-  ///
-  /// DO NOT set it to a value or overide it that is handled by a [MapIO] object
-  void Function(KW key , VW value ) onEntryRecieved;
-
-
-  /// delete the entry for the [key]
-  ///
-  /// returns whether or not the deletion was successful,
-  /// a value of false does not necessarily mean the data was not deleted
-  Future<bool> deleteEntry(KW key);
-
-  /// sets the entry with the given [key] to the given [value]
-  ///
-  /// if the entry does not exist beforehand it is created
-  ///
-  /// returns whether or not it was succeful in adding
-  Future<bool> setEntry(KW key, VW value);
-
-  /// create a new entry with the given [value] and return its associated key
-  Future<KW> addEntry(VW value);
-
-  Future<void> requestEntry(KW key);
-
-}
 
