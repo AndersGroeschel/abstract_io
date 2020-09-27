@@ -1,15 +1,16 @@
+import 'dart:io';
+
 import 'package:abstract_io/abstract_io.dart';
 
 /// a mixin on [AbstractIO] to allow this to easily read and write values without any
 /// purposeful storage of a value
-mixin ValueFetcher<W, R> on AbstractIO<W, R> {
+mixin  ValueFetcher<W, R> on AbstractFile<W, R> {
   /// temporary value so that data from [onDataRecieved] can be transferred easily
   R _tempVal;
 
-
   /// write [data] using the [ioInterface] given to this
   Future<bool> write(R data) {
-    return setData(data);
+    return storeData(data);
   }
 
   /// read the value that was saved using the [ioInterface] given to this
@@ -40,7 +41,7 @@ mixin FetcherAccess {
 }
 
 
-mixin EntryFetcher<KW, VW, KR, VR> on MapIO<KW, VW, KR, VR>{
+mixin EntryFetcher<KW, VW, KR, VR> on AbstractDirectory <KW, VW, KR, VR>{
 
   VR _recievedValue;
 
@@ -50,8 +51,8 @@ mixin EntryFetcher<KW, VW, KR, VR> on MapIO<KW, VW, KR, VR>{
   }
 
   @override
-  void onEntryRecieved(key, value) {
-    _recievedValue = value;
+  void onDataRecieved(VR data) {
+    _recievedValue = data;
   }
 
 }

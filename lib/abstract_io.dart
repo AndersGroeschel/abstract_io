@@ -8,7 +8,7 @@ export 'abstract_io/abstract_base.dart';
 export 'abstract_io/additional_functionality.dart';
 export 'abstract_io/value_fetcher.dart';
 export 'abstract_io/value_storage.dart';
-export 'abstract_io/map_base.dart';
+export 'abstract_io/entry_storage.dart';
 export 'abstract_io/locking.dart';
 
 export 'translators/translators.dart';

@@ -7,15 +7,12 @@ import 'package:flutter/foundation.dart';
 /// by itself this mixin isn't that powerful but it sets the stage for more useful
 /// functionality with [ListStorage] and [MapStorage] to allow for iterable forms of
 /// storage or [ValueAccess] for direct access to the value
-mixin ValueStorage<W, R> on AbstractIO<W, R> {
+mixin ValueStorage<W, R> on AbstractFile<W, R> {
   /// the stored data that was loaded
   R _data;
 
 
-  /// writes [_data] using the [setData] function
-  Future<bool> write() async {
-    return setData(_data);
-  }
+  Future<bool> write() => storeData(_data);
 
   /// loads the value into [_data] using the [ioInterface]'s requestData function
   Future<void> load() async {
@@ -75,6 +72,12 @@ mixin ValueStorage<W, R> on AbstractIO<W, R> {
 
 /// a mixin that allows this to access the [_data] that is being stored
 mixin ValueAccess<W, R> on ValueStorage<W, R> {
+
+  /// writes [_data] using the [setData] function
+  Future<bool> write() async {
+    return storeData(_data);
+  }
+
   /// the current value stored in this
   R get value {
     if (_data == null) {
@@ -189,6 +192,12 @@ mixin StorageAccess {
 /// automatically notifies listeners of an update if this has the [ListenerSupport] or
 /// [ValueListenableSupport] mixin
 mixin ListStorage<W, E> on ValueStorage<W, List<E>> implements List<E> {
+
+  /// writes [_data] using the [setData] function
+  Future<bool> write() async {
+    return storeData(_data);
+  }
+
   /// called when a value is added to the list
   ///
   /// if the element has the [StorageAccess] mixin its storage reference is set to this
@@ -882,207 +891,7 @@ mixin MapStorage<W, K, V> on ValueStorage<W, Map<K, V>> implements Map<K, V> {
   Iterable<V> get values => _data.values;
 }
 
-/// adds some optimizations to the [MapStorage] mixin if the data is stored as a map
-/// that can have values accessed independently using [MapIO]
-///
-/// this allows the user to modify and save specific entries rather than
-/// saving the whole map when a value is changed
-mixin MapOptimizations<KW, VW, KR, VR>
-    on MapIO<KW, VW, KR, VR>, MapStorage<Map<KW, VW>, KR, VR> {
 
-  @override
-  void operator []=(KR key, VR value) {
-    _removedVal(_data[key]);
-    _addedVal(value);
-    _data[key] = value;
-    if (_shouldSave) {
-      setEntry(key, value);
-    }
-    _notify();
-  }
-
-  @override
-  void addAll(Map<KR, VR> other, {bool save}) {
-    if (save != null) {
-      _shouldSave = save;
-    }
-    _shouldNotify = false;
-    for (KR key in other.keys) {
-      this[key] = other[key];
-    }
-    _reset();
-    _notify();
-  }
-
-  @override
-  void addEntries(Iterable<MapEntry<KR, VR>> entries, {bool save}) {
-    if (save != null) {
-      _shouldSave = save;
-    }
-    _shouldNotify = false;
-    for (MapEntry<KR, VR> entry in entries) {
-      this[entry.key] = entry.value;
-    }
-    _reset();
-    _notify();
-  }
-
-  @override
-  Future<KR> addEntry(value) async {
-    KR key = await super.addEntry(value);
-    _data[key] = value;
-    return key;
-  }
-
-  @override
-  void clear({bool save}) {
-    bool s = save ?? _shouldSave;
-    for (MapEntry<KR, VR> entry in entries) {
-      if (s) {
-        deleteEntry(entry.key);
-      }
-      _removedVal(entry.value);
-    }
-    _data.clear();
-    _notify();
-    if (save ?? _shouldSave) {
-      write();
-    }
-  }
-
-  @override
-  VR putIfAbsent(KR key, VR Function() ifAbsent, {bool save}) {
-    bool called = false;
-    VR val = _data.putIfAbsent(key, () {
-      called = true;
-      VR val = ifAbsent();
-      _addedVal(val);
-      return val;
-    });
-    if (called) {
-      _notify();
-      if (save ?? _shouldSave) {
-        setEntry(key, val);
-      }
-    }
-    return val;
-  }
-
-  @override
-  VR remove(Object key, {bool save}) {
-    VR val = _data.remove(key);
-    _removedVal(val);
-    _notify();
-    if (save ?? _shouldSave) {
-      deleteEntry(key);
-    }
-    return val;
-  }
-
-  @override
-  void removeWhere(bool Function(KR, VR) predicate, {bool save}) {
-    bool removed = false;
-    bool s = save ?? _shouldSave;
-    _shouldNotify = false;
-    Iterable<MapEntry<KR,VR>> toBeRemoved = _data.entries.where((element) => predicate(element.key, element.value));
-    for(MapEntry<KR,VR> entry in toBeRemoved){
-      removed = true;
-      _removedVal(entry.value);
-      if(s){
-        deleteEntry(entry.key);
-      }
-    }
-    _data.removeWhere(predicate);
-    _resetNotify();
-    if (removed) {
-      _notify();
-    }
-  }
-
-  @override
-  VR update(KR key, VR Function(VR value) update,{VR Function() ifAbsent, bool save}) {
-    VR data = _data.update(key, update, ifAbsent: ifAbsent);
-    if (save ?? _shouldSave) {
-      setEntry(key, data);
-    }
-    _notify();
-    return data;
-  }
-
-  /// writes the entry with the given [key]
-  Future<bool> writeEntry(KR key) {
-    return setEntry(key, _data[key]);
-  }
-
-  Future<void> loadEntry(KR key) async{
-    await ioInterface.requestEntry(keyTranslator.translateReadable(key));
-  }
-
-  @override
-  void onEntryRecieved(key, value) async {
-    _removedVal(_data[key]);
-    _addedVal(value);
-    _data[key] = value;
-    _notify();
-  }
-
-  
-
-}
-
-
-mixin MapStorageEntryLock<KW, VW, KR, VR> on EntryLockableMapIO<KW, VW, KR, VR>, MapStorage< Map<KW,VW>, KR, VR>{
-
-  @override
-  VR update(KR key, VR Function(VR value) update,
-      {VR Function() ifAbsent, bool save, bool lock = false}) {
-    if (lock && (save ?? _shouldSave)) {
-      VR val;
-      lockAndUpdateEntry(key, (value) {
-        if (value == null) {
-          val = ifAbsent();
-        } else {
-          val = update(value);
-        }
-        return val;
-      }).then((value) {
-        _data[key] = value;
-        _notify();
-      });
-      return val;
-    }
-    VR data = _data.update(key, update, ifAbsent: ifAbsent);
-    if (save ?? _shouldSave) {
-      setEntry(key, data);
-    }
-    _notify();
-    return data;
-  }
-
-}
-
-mixin MapStorageLock<KW, VW, KR, VR> on LockableMapIO<KW, VW, KR, VR>, MapStorage< Map<KW,VW>, KR, VR>{
-
-  @override
-  void updateAll(VR Function(KR, VR) update, {bool save, bool lock = false}) {
-    if ((save ?? _shouldSave) && lock) {
-      lockAndUpdate((newData) {
-        newData.updateAll(update);
-        return newData;
-      }).then((value) {
-        _data.addAll(value);
-        _notify();
-      });
-      return;
-    }
-    _data.updateAll(update);
-    _notify();
-    if (save ?? _shouldSave) {
-      write();
-    }
-  }
-
-}
 
 
 

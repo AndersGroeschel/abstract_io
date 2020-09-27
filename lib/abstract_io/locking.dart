@@ -2,7 +2,7 @@ import 'package:abstract_io/abstract_io.dart';
 
 /// adds the functionality to [lockAndUpdate] data,
 /// this is often nessecary functionality when storing data off device to avoid race conditions
-mixin Lock<W> on IOInterface<W>{
+mixin Lock<W> on FileInterface<W>{
   /// locks the data where it is being stored and updates it
   ///
   /// the protocol [lockAndUpdate] should follow is
@@ -23,7 +23,7 @@ mixin Lock<W> on IOInterface<W>{
 
 }
 
-mixin LockEntry<KW,VW> on MapIOInterface<KW,VW>{
+mixin LockEntry<KW,VW> on DirectoryInterface<KW,VW>{
 
   /// lock and update a specific entry with the given [key]
   ///
@@ -33,46 +33,11 @@ mixin LockEntry<KW,VW> on MapIOInterface<KW,VW>{
 
 }
 
-mixin LockMap<KW, VW> on MapIOInterface<KW,VW> implements Lock<Map<KW,VW>>, LockEntry<KW,VW>{}
-
-
-abstract class LockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR> implements EntryLockableMapIO<KW, VW, KR, VR>, LockableIO<Map<KW,VW>, Map<KR,VR>>{
-  final LockMap<KW, VW> ioInterface;
-  LockableMapIO(
-    this.ioInterface,
-    {
-      Translator<KW, KR> keyTranslator,
-      Translator<VW, VR> valueTranslator
-    }
-  ) : super(
-    ioInterface,
-    keyTranslator: keyTranslator,
-    valueTranslator: valueTranslator
-  );
-
-  /// locks the entry with the given [key] and updates it using the [update] function
-  ///
-  /// returns the updated value in a future
-  Future<VR> lockAndUpdateEntry(KR key, VR Function(VR newData) update) {
-    return ioInterface.lockAndUpdateEntry<VR>(
-        keyTranslator.translateReadable(key), update,
-        valueTranslator: valueTranslator);
-  }
-
-  /// [lockAndUpdate] will lock the server side data and allow you to update it with
-  /// the [update] function
-  ///
-  /// the functionality of this is handled by the [ioInterface] which must be an [LockableIOInterface]
-  Future<Map<KR,VR>> lockAndUpdate(Map<KR,VR> Function(Map<KR,VR> newData) update) {
-    return ioInterface.lockAndUpdate<Map<KR,VR>>(update, translator: translator);
-  }
-
-}
-
-
-abstract class EntryLockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR>{
+abstract class AbstractLockableDirectory<KW, VW, KR, VR> extends AbstractDirectory<KW,VW, KR, VR>{
+  
   final LockEntry<KW, VW> ioInterface;
-  EntryLockableMapIO(
+
+  AbstractLockableDirectory(
     this.ioInterface,
     {
       Translator<KW, KR> keyTranslator,
@@ -106,19 +71,20 @@ abstract class EntryLockableMapIO<KW, VW, KR, VR> extends MapIO<KW,VW, KR, VR>{
 /// a data race could occur
 ///
 /// for more information about writing and reading data visit the parent class [AbstractIO]
-abstract class LockableIO<W, R> extends AbstractIO<W, R> {
+abstract class AbstractLockableFile<W, R> extends AbstractIO<W, R> {
   final Lock<W> ioInterface;
-  LockableIO(
+
+  AbstractLockableFile(
     this.ioInterface, {
-    Translator<W, R> translator,
-  }) : super(ioInterface, translator: translator);
+    Translator<W, R> valueTranslator,
+  }) : super(ioInterface, valueTranslator: valueTranslator);
 
   /// [lockAndUpdate] will lock the server side data and allow you to update it with
   /// the [update] function
   ///
   /// the functionality of this is handled by the [ioInterface] which must be an [LockableIOInterface]
   Future<R> lockAndUpdate(R Function(R newData) update) {
-    return ioInterface.lockAndUpdate<R>(update, translator: translator);
+    return ioInterface.lockAndUpdate<R>(update, translator: valueTranslator);
   }
 }
 

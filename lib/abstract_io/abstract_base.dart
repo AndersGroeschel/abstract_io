@@ -20,7 +20,7 @@ abstract class AbstractIO<W, R> {
   /// that will be used (R)
   ///
   /// see [Translator] for more information
-  final Translator<W, R> translator;
+  final Translator<W, R> valueTranslator;
 
   /// provides an interface to send, recieve, request, and delete data of the
   /// writeable type W
@@ -28,22 +28,18 @@ abstract class AbstractIO<W, R> {
   /// see [IOInterface] for more information
   ///
   /// this value is public in case it needs to be closed at the end of use
-  final IOInterface<W> ioInterface;
+  final _IOInterface<W> _ioInterface;
+
+  _IOInterface<W> get ioInterface => _ioInterface;
+
 
   AbstractIO(
-    this.ioInterface, {
-    Translator<W, R> translator,
-  }) : this.translator = translator?? CastingTranslator<W, R>() {
+    _IOInterface<W> ioInterface, {
+    Translator<W, R> valueTranslator,
+  }) : 
+    this._ioInterface = ioInterface,
+    this.valueTranslator = valueTranslator?? CastingTranslator<W, R>() {
     initialize();
-  }
-
-  /// sends the data to wherever it is being stored and returns whether or not
-  /// it was successful
-  ///
-  /// the core functionality of this function is implemented in ioInterface
-  @protected
-  Future<bool> setData(R data) {
-    return ioInterface.setData(translator.translateReadable(data));
   }
 
   /// called when data is recieved by the [ioInterface]
@@ -60,11 +56,13 @@ abstract class AbstractIO<W, R> {
   @protected
   @mustCallSuper
   void initialize() {
-    ioInterface.onDataRecieved = (W data) {
-      onDataRecieved(translator.translateWritable(data));
+    _ioInterface?.dataRecieved = (W data) {
+      onDataRecieved(valueTranslator.translateWritable(data));
     };
   }
+
 }
+
 
 
 /// takes two data types a readable R and a writable (W) and translates between
@@ -109,6 +107,30 @@ abstract class Translator<W, R> {
 }
 
 
+
+
+abstract class _IOInterface<W> extends AbstractIO<W,W>{
+
+  final Translator<W,W> valueTranslator = SameTypeTranslator<W>();
+
+
+  _IOInterface() : super(null);
+
+  /// this funtion is called whenever this receives some data
+  ///
+  /// DO NOT set it to a value or overide it that is handled by an [AbstractIO] object
+  void Function(W data) dataRecieved;
+
+  @override 
+  void onDataRecieved(W data){
+    dataRecieved(data);
+  }
+
+  @override
+  _IOInterface<W> get ioInterface => this;
+
+}
+
 /// allows you to send data request data and recieve data all of type W
 ///
 /// it is best practice that W should be the type that the data is sent as
@@ -116,15 +138,16 @@ abstract class Translator<W, R> {
 ///
 /// this does need to be specific to files, it could be used to interface with servers
 /// or anything else nessasary
-abstract class IOInterface<W> {
-  /// sets the data in the storage place to the given data and returns whether or not
-  /// it was successful
-  Future<bool> setData(W data);
+abstract class FileInterface<W> extends _IOInterface<W> implements AbstractFile<W,W> {
 
-  /// this funtion is called whenever this receives some data
-  ///
-  /// DO NOT set it to a value or overide it that is handled by an [AbstractIO] object
-  void Function(W data) onDataRecieved;
+  final FileInterface<W> _ioInterface = null;
+
+  @override
+  FileInterface<W> get ioInterface => this;
+
+
+  @override
+  Future<bool> storeData(W data);
 
   /// requests the storage to send some data to this
   ///
@@ -140,7 +163,133 @@ abstract class IOInterface<W> {
   ///
   /// returns whether or not the deletion was successful,
   /// a value of false does not necessarily mean the data was not deleted
+  @override
   Future<bool> deleteData();
 }
 
+
+abstract class AbstractFile<W,R> extends AbstractIO<W,R>{
+
+  final FileInterface<W> _ioInterface;
+
+  FileInterface<W> get ioInterface => _ioInterface;
+
+
+  AbstractFile(
+    FileInterface<W> ioInterface,
+  {
+    Translator<W,R> valueTranslator
+  }): 
+    this._ioInterface = ioInterface,
+    super(
+      ioInterface,
+      valueTranslator: valueTranslator
+    );
+
+
+  Future<bool> storeData(R data){
+    return ioInterface.storeData(valueTranslator.translateReadable(data));
+  }
+
+  Future<bool> deleteData() => ioInterface.deleteData();
+
+}
+
+
+abstract class DirectoryInterface<KW,VW> extends _IOInterface<VW> implements AbstractDirectory<KW,VW,KW,VW>{
+
+  final DirectoryInterface<KW,VW> _ioInterface = null;
+
+  final Translator<KW, KW> keyTranslator = SameTypeTranslator<KW>();
+
+  @override
+  DirectoryInterface<KW,VW> get ioInterface => this;
+
+
+  /// should store the [value] at the given [key] for later use
+  @override
+  Future<bool> storeEntry(KW key, VW value);
+
+  /// requests the data for the given [key] and calls [onDataRecieved] with the value that is loaded
+  /// 
+  /// the future should complete after [onDataRecieved] is called in order to ensure proper usage
+  /// 
+  /// consider passing null to [onDataRecieved] when an error occurs rather than letting it be thrown
+  /// this gives some mixins the ability to handle the error easily
+  Future<void> requestEntry(KW key);
+
+  /// delets the entry associated with the given [key]
+  /// 
+  /// returns whether or not the deletion was successful,
+  /// a value of false does not necessarily mean the data was not deleted
+  @override
+  Future<bool> deleteEntry(KW key);
+
+  /// adds a new entry with the given [value] and returns the key generated for that entry
+  @override
+  Future<KW> addEntry(VW value);
+
+
+  FileInterface<VW> entryInterface(KW key) => _DirectoryFileInterface<KW,VW>(key, this);
+
+}
+
+class _DirectoryFileInterface<KW,VW> extends FileInterface<VW>{
+
+  final KW key;
+  final DirectoryInterface<KW,VW> directory;
+
+  _DirectoryFileInterface(
+    this.key,
+    this.directory
+  ): super();
+
+  @override
+  Future<bool> deleteData() => directory.deleteEntry(key);
+
+  @override
+  Future<void> requestData() => directory.requestEntry(key);
+
+  @override
+  Future<bool> storeData(VW data) => directory.storeEntry(key, data);
+
+}
+
+abstract class AbstractDirectory<KW,VW, KR,VR> extends AbstractIO<VW,VR>{
+
+
+  final Translator<KW,KR> keyTranslator;
+  final DirectoryInterface<KW,VW> _ioInterface;
+  
+  @override
+  DirectoryInterface<KW,VW> get ioInterface => _ioInterface;
+
+  AbstractDirectory(
+    DirectoryInterface<KW,VW> ioInterface,
+    {
+      Translator<VW,VR> valueTranslator,
+      Translator<KW,KR> keyTranslator
+    }
+  ):
+    this.keyTranslator = keyTranslator?? CastingTranslator<KW,KR>(),
+    this._ioInterface = ioInterface,
+    super(
+      ioInterface,
+      valueTranslator: valueTranslator
+    );
+
+  Future<bool> storeEntry(KR key, VR value){
+    return ioInterface.storeEntry(
+      keyTranslator.translateReadable(key), 
+      valueTranslator.translateReadable(value)
+    );
+  }
+
+  Future<bool> deleteEntry(KR key) => ioInterface.deleteEntry(keyTranslator.translateReadable(key));
+
+  Future<KR> addEntry(VR value) async => keyTranslator.translateWritable(
+    await ioInterface.addEntry(valueTranslator.translateReadable(value))
+  ); 
+
+}
 
