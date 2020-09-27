@@ -28,13 +28,13 @@ abstract class AbstractIO<W, R> {
   /// see [IOInterface] for more information
   ///
   /// this value is public in case it needs to be closed at the end of use
-  final _IOInterface<W> _ioInterface;
+  final IOInterface<W> _ioInterface;
 
-  _IOInterface<W> get ioInterface => _ioInterface;
+  IOInterface<W> get ioInterface => _ioInterface;
 
 
   AbstractIO(
-    _IOInterface<W> ioInterface, {
+    IOInterface<W> ioInterface, {
     Translator<W, R> valueTranslator,
   }) : 
     this._ioInterface = ioInterface,
@@ -109,12 +109,12 @@ abstract class Translator<W, R> {
 
 
 
-abstract class _IOInterface<W> extends AbstractIO<W,W>{
+abstract class IOInterface<W> extends AbstractIO<W,W>{
 
   final Translator<W,W> valueTranslator = SameTypeTranslator<W>();
 
 
-  _IOInterface() : super(null);
+  IOInterface() : super(null);
 
   /// this funtion is called whenever this receives some data
   ///
@@ -127,7 +127,7 @@ abstract class _IOInterface<W> extends AbstractIO<W,W>{
   }
 
   @override
-  _IOInterface<W> get ioInterface => this;
+  IOInterface<W> get ioInterface => this;
 
 }
 
@@ -138,7 +138,7 @@ abstract class _IOInterface<W> extends AbstractIO<W,W>{
 ///
 /// this does need to be specific to files, it could be used to interface with servers
 /// or anything else nessasary
-abstract class FileInterface<W> extends _IOInterface<W> implements AbstractFile<W,W> {
+abstract class FileInterface<W> extends IOInterface<W> implements AbstractFile<W,W> {
 
   final FileInterface<W> _ioInterface = null;
 
@@ -196,7 +196,7 @@ abstract class AbstractFile<W,R> extends AbstractIO<W,R>{
 }
 
 
-abstract class DirectoryInterface<KW,VW> extends _IOInterface<VW> implements AbstractDirectory<KW,VW,KW,VW>{
+abstract class DirectoryInterface<KW,VW> extends IOInterface<VW> implements AbstractDirectory<KW,VW,KW,VW>{
 
   final DirectoryInterface<KW,VW> _ioInterface = null;
 
