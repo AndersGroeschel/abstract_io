@@ -1,3 +1,6 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
 import 'abstract_base.dart';
 import 'locking.dart';
 
@@ -177,7 +180,6 @@ mixin EntryStorage<KW,VW, KR,VR> on AbstractDirectory<KW,VW, KR,VR> implements M
   }
 }
 
-
 mixin EntryStorageLock<KW, VW, KR, VR> on AbstractLockableDirectory<KW, VW, KR, VR>, EntryStorage<KW,VW, KR,VR>{
 
   @override
@@ -195,6 +197,9 @@ mixin EntryStorageLock<KW, VW, KR, VR> on AbstractLockableDirectory<KW, VW, KR, 
         return val;
       }).then((value) {
         _map[key] = value;
+        if(this is EntryListenable){
+          (this as EntryListenable).notifyListeners();
+        }
       });
       return val;
     }
@@ -206,11 +211,154 @@ mixin EntryStorageLock<KW, VW, KR, VR> on AbstractLockableDirectory<KW, VW, KR, 
     return data;
   }
 
+  ///Updates all values.
+  ///
+  ///Iterates over all entries in the map and updates them with the result of invoking [update].
+  ///
+  ///Copied from Map.
+  ///
+  /// this function assumes that updating an entry does not depened on other entries 
+  /// when the lock is activiated
+  @override
+  Future<void> updateAll(Function(KR key, VR value) update, {bool save, bool lock = false}) async {
+    if(lock && (save?? _save)){
+      await Future.wait([
+        for(KR key in _map.keys)
+          lockAndUpdateEntry(key, (newData) => update(key,newData)).then((value) => _map[key] = value)
+      ]);
+    }
+    if(!lock){
+      super.updateAll(update, save: save);
+    }
+  }
+
 }
 
 
+mixin KeyContainer<K>{
+
+  K get key;
+
+}
+
+mixin KeyContainerFunctionality<KW,VW, KR,VR extends KeyContainer> on EntryStorage<KW,VW, KR,VR>{
 
 
+  Future<void> loadEntry(KR key) async {
+    await ioInterface.requestEntry(keyTranslator.translateReadable(key));
+  } 
 
+  @override
+  void onDataRecieved(VR data) {
+    _map[data.key] = data;
+  }
+
+
+}
+
+
+/// notifies listeners when entries change via the standard map functions
+mixin EntryListenable<KW,VW, KR,VR> on EntryStorage<KW,VW, KR,VR> implements ValueListenable<Map<KR,VR>>{
+
+  final List<VoidCallback> _listeners = [];
+
+  Map<KR,VR> get data => _map;
+
+  /// notifies listeners that an update has occured
+  void notifyListeners() {
+    for (VoidCallback listener in _listeners) {
+      listener();
+    }
+  }
+
+  @override
+  void addListener(listener) {
+    if (listener == null) {
+      return;
+    }
+    _listeners.add(listener);
+  }
+
+  @override
+  void removeListener(listener) {
+    _listeners.remove(listener);
+  }
+
+  @override
+  @mustCallSuper
+  void onDataRecieved(data) {
+    super.onDataRecieved(data);
+    notifyListeners();
+  }
+
+
+  @override
+  void operator []=(KR key, VR value) {
+    super[key] = value;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> addAll(Map<KR,VR> other, {bool save}) async {
+    super.addAll(other, save: save);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> addEntries(Iterable<MapEntry<KR, VR>> newEntries,{bool save}) async {
+    super.addEntries(newEntries, save: save);
+    notifyListeners();
+  }
+
+  @override
+  Future<void> clear({bool save}) async {
+    super.clear(save: save);
+    notifyListeners();
+  }
+
+  @override
+  VR putIfAbsent(KR key, VR Function() ifAbsent, {bool save}) {
+    bool newval = false;
+    VR val = super.putIfAbsent(key, (){
+      newval = true;
+      return ifAbsent();
+    }, save: save);
+
+    if(newval){
+      notifyListeners();
+    }
+    return val;
+  }
+
+  @override
+  VR remove(Object key, {bool save}) {
+    bool notify = this.containsKey(key);
+    VR val = super.remove(key, save: save);
+    if(notify){
+      notifyListeners();
+    }
+    return val;
+  }
+
+  @override
+  void removeWhere(bool Function(KR key, VR value) predicate, {bool save}) {
+    super.removeWhere(predicate, save: save);
+    notifyListeners();
+  }
+
+  @override
+  VR update(KR key , VR Function(VR value) update, {VR Function() ifAbsent, bool save}) {
+    VR val = super.update(key, update, ifAbsent: ifAbsent, save: save);
+    notifyListeners();
+    return val;
+  }
+
+  @override
+  void updateAll(VR Function(KR key, VR value) update, {bool save}) {
+    super.updateAll(update, save: save);
+    notifyListeners();
+  }
+
+}
 
 
