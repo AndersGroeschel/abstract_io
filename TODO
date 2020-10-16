@@ -1,0 +1,6 @@
+- DeepStorage object
+    - extends AbstractDirectory
+    - is able to be loaded and then load "children" so you can go deeper and deeper into DeepStorage
+- add Documentation to new changes
+- update IOInterface for local file storage, and release IOInterface for firebase
+- rewrite example app to refelect new changes
