@@ -1,3 +1,11 @@
+## [0.2.0] - 10/14/2020
+* rewrote most of the core code in this project
+* further seperated the idea of accesing a single file and the idea of accessing multiple files and renamed the parent classes AbstractFile and AbstractDirectory respectively
+* created seperate IOInterfaces, FileIO and DirectoryIO, for AbstractFile and AbstractDirectory respectively
+* made IOInterface extend AbstractIO so it can take advantage of provided mixins
+* redid most of the MapIO code and transfered it over to the new AbstractDirectory system
+* kept most of the original mixins to be used for AbstractFile
+
 ## [0.1.2+6] - 8/3/2020
 * now it works for sure
 
